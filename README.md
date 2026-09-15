@@ -670,8 +670,8 @@ MIT License — see [LICENSE](LICENSE)
 **Tommaso Terrin**
 
 - GitHub: [@TommasoTerrin](https://github.com/TommasoTerrin)
-- Email: tterrin@ibc.it
-- Company: [IBC S.R.L.](https://ibc.it)
+- LinkedIn: [Tommaso Terrin](https://www.linkedin.com/in/tommaso-terrin-750472253/)
+- Email: tommaso@terrin.eu
 
 ---
 
@@ -692,7 +692,7 @@ lasagna draws from:
 
 - **Issues & Bugs** → [GitHub Issues](https://github.com/TommasoTerrin/lasagna-code/issues)
 - **Discussions** → [GitHub Discussions](https://github.com/TommasoTerrin/lasagna-code/discussions)
-- **Security** → Email tterrin@ibc.it with `[SECURITY]` in subject
+- **Security** → Email tommaso@terrin.eu with `[SECURITY]` in subject
 
 ---
 

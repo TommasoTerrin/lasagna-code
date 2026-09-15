@@ -32,7 +32,7 @@ Examples of unacceptable behavior:
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting:
 
-**Email:** tterrin@ibc.it  
+**Email:** tommaso@terrin.eu  
 **Subject:** `[COC VIOLATION]` + description
 
 All complaints will be reviewed and investigated promptly and fairly.

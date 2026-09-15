@@ -339,7 +339,7 @@ When reviewing a PR, check:
 
 - **General questions** → [GitHub Discussions](https://github.com/TommasoTerrin/lasagna-code/discussions)
 - **Bugs** → [GitHub Issues](https://github.com/TommasoTerrin/lasagna-code/issues)
-- **Security** → Email tterrin@ibc.it with `[SECURITY]` in subject
+- **Security** → Email tommaso@terrin.eu with `[SECURITY]` in subject
 
 ---
 
@@ -349,4 +349,4 @@ Thank you for contributing! Your work makes lasagna better for everyone.
 
 ---
 
-**Questions about this file?** Open a discussion or email tterrin@ibc.it.
+**Questions about this file?** Open a discussion or email tommaso@terrin.eu.
