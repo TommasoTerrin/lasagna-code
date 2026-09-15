@@ -2,6 +2,9 @@
 .lasagna/state/
 .lasagna/*.precompact.md
 
+# Private working notes, never published
+note.md
+
 # IDE and editor
 .vscode/
 .idea/
