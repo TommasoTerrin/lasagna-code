@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🍝 lasagna
 
 ![lasagna hero](.github/assets/hero.jpg)
@@ -696,3 +697,7 @@ lasagna draws from:
 ---
 
 **Made with ❤️ for developers who love structure, not chaos.**
+=======
+# lasagna-code
+Layered Spec-Driven Harness for Claude Code — precise specs, frozen contracts, red-green loop with isolated test/implementation roles.
+>>>>>>> 74de07c6743154f6d7c9fdb62766006b0b639b21
