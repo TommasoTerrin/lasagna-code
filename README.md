@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # 🍝 lasagna
 
 ![lasagna hero](.github/assets/hero.jpg)
