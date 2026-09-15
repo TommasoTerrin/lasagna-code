@@ -1,5 +1,5 @@
 
-# 🍝 lasagna
+# 🍝 lasagna-code
 
 ![lasagna hero](.github/assets/hero.jpg)
 
