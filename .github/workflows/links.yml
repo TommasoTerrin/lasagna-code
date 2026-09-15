@@ -1,0 +1,35 @@
+name: 🔗 Check Links
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.md'
+      - '.github/workflows/links.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.md'
+
+jobs:
+  markdown-link-check:
+    runs-on: ubuntu-latest
+    name: Validate links in Markdown files
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔗 Check links in Markdown
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'no'
+          config-file: '.github/markdown-link-check-config.json'
+          folder-path: '.'
+          file-path: './README.md, ./README.it.md, ./CONTRIBUTING.md, ./CODE_OF_CONDUCT.md'
+
+      - name: 📊 Summary
+        if: success()
+        run: |
+          echo "✅ All links are valid!"

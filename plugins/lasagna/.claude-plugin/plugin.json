@@ -1,0 +1,19 @@
+{
+  "name": "lasagna",
+  "version": "0.1.0",
+  "description": "Layered spec-driven harness for Claude Code. Precise spec, domain model, frozen contract, then a red-green loop where the agent writing the test and the agent writing the code never share context. Three human gates, a fixed cycle budget, and mechanical traceability from acceptance criteria to tests.",
+  "author": {
+    "name": "tommaso terrin"
+  },
+  "homepage": "https://github.com/TommasoTerrin/lasagna-code",
+  "repository": "https://github.com/TommasoTerrin/lasagna-code",
+  "license": "MIT",
+  "keywords": [
+    "spec-driven-development",
+    "tdd",
+    "domain-driven-design",
+    "hexagonal-architecture",
+    "guardrails",
+    "loop-engineering"
+  ]
+}

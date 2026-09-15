@@ -1,0 +1,303 @@
+# lasagna — Layered Spec-Driven Harness for Claude Code
+
+[🇮🇹 Versione italiana](README.it.md)
+
+**The opposite of spaghetti code.** A Claude Code plugin that brings structure to software development through precise specifications, domain modeling, frozen contracts, and a red-green loop with **mechanically isolated test and implementation roles**.
+
+- **Spec-driven**: start with a precise spec approved by a human. Domain model derives from it. Contract freezes before any code.
+- **Test-driven**: one test per cycle, written without seeing the implementation. The test-writer and implementer never share context.
+- **Layered**: domain core is pure (no I/O, no clock), adapters touch the world. Layering rules are enforced on every write.
+- **Guarded**: three human gates, mechanical isolation via hooks, a fixed cycle budget, and traceability from acceptance criteria to tests.
+- **Stack-agnostic**: Python/TypeScript/JVM/.NET. Greenfield projects and legacy codebases.
+
+---
+
+## The flow
+
+```mermaid
+graph LR
+    Start([feature requested]) --> GR["🟨 Gate: Rough idea"]
+    
+    subgraph official["Official flow"]
+        GR --> Grilling["grilling<br/>interview + stack profile"]
+        Grilling --> ToSpec["to-spec<br/>Jacobson use cases + criteria"]
+        ToSpec --> G1["🟨 Gate 1: Spec approval"]
+        G1 --> DomainM["domain-modeling<br/>entities, aggregates, invariants"]
+        DomainM --> FC["freeze-contract<br/>public signatures, errors, ports"]
+        FC --> G2["🟨 Gate 2: Contract approval"]
+        G2 --> TDD["tdd-loop<br/>red-green cycles, budget 3 domain"]
+        TDD --> AR["adversarial-review<br/>hunt gaps, verify coverage"]
+        AR --> PA["ports-adapters<br/>real infra, separate world from domain"]
+        PA --> G3["🟨 Gate 3: PR review"]
+        G3 --> Merge["✅ Merge"]
+    end
+    
+    subgraph prototype["Prototype flow"]
+        GR2["idea needs validation"] --> GrillingP["grilling<br/>reduced: just the question"]
+        GrillingP --> Build["build + validate"]
+        Build --> Approved{"validated?"}
+        Approved -->|yes| ToSpec
+        Approved -->|no| Pivot["pivot or abandon"]
+    end
+    
+    subgraph bugfix["Bugfix flow"]
+        Bug["🐛 bug reported"] --> Char["characterize<br/>pin current behavior"]
+        Char --> Repro["reproduce<br/>red test of desired behavior"]
+        Repro --> TDD2["tdd-loop<br/>budget 5, no spec"]
+        TDD2 --> AR2["adversarial-review<br/>check for regressions"]
+        AR2 --> G3B["🟨 Gate 3 or auto-merge"]
+        G3B --> MergeB["✅ Merge"]
+    end
+    
+    subgraph brownfield["Brownfield flow"]
+        Legacy["legacy code<br/>no spec yet"] --> Rev["reverse-spec<br/>reconstruct from code"]
+        Rev --> Confirm["human confirms<br/>what is wanted vs bug vs dead"]
+        Confirm --> ToSpec
+    end
+    
+    GR -->|greenfield, decided| official
+    GR -->|idea, uncertain| prototype
+    GR -->|defect| bugfix
+    GR -->|existing code| brownfield
+    
+    Merge --> End(["done"])
+    MergeB --> End
+    Pivot --> End
+    style GR fill:#ffe680
+    style G1 fill:#ffe680
+    style G2 fill:#ffe680
+    style G3 fill:#ffe680
+    style G3B fill:#ffe680
+```
+
+---
+
+## What's enforced, what's not
+
+### Mechanical (hooks + scripts, always on unless disabled)
+
+- **Test-write block**: implementer cannot edit test files, ever. Enforced by a hook on every `Edit`/`Write`.
+- **Cycle budget**: domain layer gets 3 implementer attempts, adapters get 5. A hook counts on every completion.
+- **Layering rules**: domain core cannot import infrastructure or touch I/O/clock/randomness. Enforced on every write. On legacy codebases, violations are grandfathered into a baseline and only new ones block.
+- **Test outcome capture**: every test run is classified (green / red-compile / red-assertion / unknown) and recorded in the phase state.
+- **Traceability**: every acceptance criterion `AC-<feature>-NNN` must appear in the test files, and vice versa. One script to check both directions.
+
+### Prompt-based (skills and agents, followed in context, not enforced)
+
+- **Isolation**: test-writer sees only the criterion and the frozen contract, never the implementation. Implementer sees only the test and the contract, never the spec. Referee sees all three, decides one.
+- **Proportionality**: each phase is deleted in the deletion test — if its complexity reappears elsewhere when skipped, you run it; if not, you skip it and declare the skip.
+- **Domain purity**: value objects are deletion-tested; aggregates come from invariants, not from schema.
+
+---
+
+## Four flows in one harness
+
+### Official (greenfield)
+
+User brings a **decided** feature. Flow: interview (stack profile) → spec (Jacobson) → domain model (aggregates, invariants) → frozen contract → red-green loop (budget 3 domain) → adversarial review → ports-adapters (budget 5) → PR gate → merge.
+
+**Three human gates**: spec approval, contract approval, PR review. Each requires explicit sign-off.
+
+### Prototype
+
+User has a **question**, not an answer. Flow: reduced interview → build → validate → if yes, re-join the official flow; if no, abandon.
+
+No spec, no gates. Just answer the question fast.
+
+### Bugfix
+
+**Defect** in working code. Flow: characterization tests (current behavior, passing) → reproducing test (desired behavior, red) → red-green loop (budget 5, no spec) → adversarial review (look for regressions) → PR gate or auto-merge if configured.
+
+### Brownfield
+
+**Legacy code** with no spec. Flow: reverse-engineer the spec from the code (entry points → use cases, schema → entity model, behaviors → criteria with sources) → human confirms what's intended vs what's a bug vs what's dead code → re-join the official flow at spec approval.
+
+---
+
+## Installation
+
+### Claude Code CLI
+
+```bash
+claude plugin marketplace add TommasoTerrin/lasagna-code
+claude plugin install lasagna
+```
+
+### Then initialize
+
+In your project:
+
+```bash
+/lasagna-init
+```
+
+Pick your stack (Python/TypeScript/JVM/.NET) or let it detect one. The init script creates `.lasagna/`, writes the stack profile, updates `.gitignore`, and reports everything it added.
+
+**Every guardrail stays inactive until the stack profile exists.** If the script says "NOT ready", the profile is missing — write it before relying on any hook.
+
+---
+
+## Usage
+
+### Start a feature
+
+```bash
+/lasagna official
+```
+
+or
+
+```bash
+/lasagna prototype
+/lasagna bugfix
+/lasagna brownfield
+```
+
+The harness routes to the right flow based on the state in `.lasagna/state/FEAT-NNN.state.md` and asks you questions.
+
+### Check status
+
+```bash
+/lasagna-status
+```
+
+Shows: feature id, phase, cycles used, criteria covered, escalation (if any), next checkpoint.
+
+---
+
+## Key files in the harness
+
+### Skills (10 workflows)
+
+- **grilling**: Socratic interview in rounds, discovers stack profile and architectural constraints.
+- **to-spec**: Jacobson use cases, acceptance criteria with ids, error taxonomy, rollback plan.
+- **domain-modeling**: Aggregates from invariants, deletion test for value objects, updates `CONTEXT.md`.
+- **freeze-contract**: Public signatures, error types, return convention, required ports, single view of the seam.
+- **tdd-loop**: Orchestrates test-writer and implementer, observes red, counts cycles, calls referee on ambiguity.
+- **adversarial-review**: Hunts gaps the green suite hides: missing error paths, invariant stress, volume edges, idempotence.
+- **ports-adapters**: Adapter phase, real infrastructure, translates vendor errors into contract types.
+- **characterize-bugfix**: No-spec bug flow: pin current behavior, reproduce the bug, then tdd-loop.
+- **reverse-spec-brownfield**: Reverse-engineer spec from legacy code, reconstruct use cases and entity model.
+- **handoff**: Compress the session into one document before context compaction.
+
+### Agents (4 roles)
+
+- **test-writer**: Writes one test per cycle from a criterion and the frozen contract. Observes red.
+- **implementer**: Writes the minimum to pass the test. Cannot modify test files (hook blocks it). Sees contract + test only.
+- **referee**: Settles one assertion dispute: test wrong, code wrong, or criterion ambiguous.
+- **adversarial-reviewer**: Hunts gaps after green. Has all context (spec, code, tests) but no `Write` tool.
+
+### Commands (3)
+
+- **/lasagna**: Entry point. Routes between flows, orchestrates.
+- **/lasagna-init**: Bootstrap: detect stack, create `.lasagna/`, write profile.
+- **/lasagna-status**: Report without changing.
+
+### Hooks (5, can be disabled)
+
+- **SessionStart**: Prints harness status (loud if profile missing, silent otherwise).
+- **PreToolUse** on Edit/Write: Block implementer from modifying test files.
+- **PostToolUse** on Bash: Classify test outcome (green / red-compile / red-assertion / unknown).
+- **PostToolUse** on Edit/Write: Layering rules on the domain core.
+- **SubagentStop** on implementer: Count cycles, escalate when budget spent.
+- **PreCompact**: Pin phase state before context compaction.
+
+### Templates (4 types)
+
+- **Spec**: Goal, non-goals, architectural constraints, Jacobson use cases, acceptance criteria, invariants, error taxonomy.
+- **Contract**: Seam, signatures, types, error mapping, return convention, required ports, "what is NOT frozen".
+- **ADR**: Architecture Decision Record, for hard-to-reverse, surprising choices with trade-offs.
+- **Stack profiles** (Python / TypeScript / JVM / .NET): Test command, outcome patterns, test paths, core paths, forbidden patterns (I/O, clock, etc.), budget.
+
+---
+
+## For legacy code (brownfield)
+
+The harness works on existing projects, but layering rules start out **defensive** to avoid noise.
+
+When you init on a legacy codebase:
+
+```bash
+sh plugins/lasagna/scripts/onion-baseline.sh
+```
+
+This records all current violations as a baseline. From then on, only **new** violations block. The baseline is committed — its diff is how reviewers see whether you're adding debt or paying it down.
+
+To check drift (are we getting better or worse?):
+
+```bash
+sh plugins/lasagna/scripts/onion-baseline.sh --check
+```
+
+---
+
+## Project paths (configurable)
+
+By default:
+
+- Specs: `.lasagna/specs/`
+- Contracts: `.lasagna/contracts/`
+- Phase state: `.lasagna/state/` (gitignored)
+- ADRs: `docs/adr/`
+- Glossary: `CONTEXT.md`
+
+Change `adr_dir` and `context_file` in the stack profile if these collide with your layout. For monorepos, set `LASAGNA_DIR` environment variable to point the harness to a different package.
+
+---
+
+## Guardrails you can turn off
+
+In the stack profile, `hooks_disabled: onion, block-tests` switches them off. Known names:
+
+- `block-tests`: Prevent implementer from editing test files.
+- `onion`: Domain layering rules.
+- `test-result`: Capture test outcome.
+- `budget`: Count cycles.
+- `precompact`: Pin phase state before compaction.
+- `session-status`: Print harness status at session start.
+
+---
+
+## Known limits
+
+- **No auto-merge in the official flow** (3 gates are human decisions). Bugfix flow can auto-merge if configured.
+- **Subagents cannot start other subagents**, so orchestration (the `/lasagna` command) runs in the main thread.
+- **Hooks read the stack profile on every use** — changes are picked up immediately, but a missing profile makes every hook a silent no-op (the SessionStart hook warns about this).
+- **Test outcome classification is textual, not semantic** — a test asserting on the string "ModuleNotFoundError" may be misclassified as red-compile instead of red-assertion. This is a hint for the referee, never a verdict.
+
+---
+
+## Who this is for
+
+- **Developers** who want guardrails, not chaos. You get mechanical isolation between test and implementation, a fixed budget per layer, and traceability from specs to tests.
+- **Teams** doing specification-first development. The spec approval gate + domain modeling ensure everyone aligns on the model before any code.
+- **Legacy projects** that need structure without the pain of refactoring everything at once. The ratchet baseline lets you freeze the debt and pay it down incrementally.
+- **Polyglot orgs**. One harness, five stack profiles. Pick your language; the flows are identical.
+
+---
+
+## Contributing
+
+Issues, PRs, and discussion welcome at [github.com/TommasoTerrin/lasagna-code](https://github.com/TommasoTerrin/lasagna-code).
+
+---
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+---
+
+## Derived from
+
+- **Spec-Driven Development**: Gojko Adzic's specification-first approach.
+- **Test-Driven Development**: Kent Beck's red-green-refactor discipline.
+- **Domain-Driven Design**: Eric Evans's ubiquitous language and aggregates.
+- **Hexagonal / Onion Architecture**: Alistair Cockburn's ports and adapters.
+- **Loop Engineering**: Augment Code's iterative agent orchestration.
+
+---
+
+## The name
+
+Lasagna is the opposite of spaghetti code. Each layer is distinct, separated, and has a clear purpose. You can pull one layer out, understand it in isolation, and rebuild it. Try that with spaghetti.

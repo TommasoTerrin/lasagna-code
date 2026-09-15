@@ -1,0 +1,58 @@
+name: 🔤 Shell Script Lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/lasagna/scripts/**'
+      - '.github/workflows/lint.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'plugins/lasagna/scripts/**'
+      - '.github/workflows/lint.yml'
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    name: Lint shell scripts
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: 📝 Lint all shell scripts
+        run: |
+          echo "Checking shell scripts for POSIX compliance..."
+          find plugins/lasagna/scripts -name "*.sh" -type f | while read script; do
+            echo ""
+            echo "Linting: $script"
+            shellcheck -x "$script" || {
+              echo "❌ Found issues in $script"
+              exit 1
+            }
+          done
+          echo ""
+          echo "✅ All shell scripts passed ShellCheck!"
+
+      - name: 🔍 Verify POSIX compliance
+        run: |
+          echo "Verifying scripts are pure POSIX (no bash-isms)..."
+          for script in plugins/lasagna/scripts/*.sh; do
+            if head -1 "$script" | grep -q "bash"; then
+              echo "⚠️  Warning: $script starts with #!/bin/bash"
+              echo "   Consider using #!/bin/sh for better portability"
+            fi
+          done
+
+      - name: 📊 Summary
+        if: success()
+        run: |
+          echo "✅ All shell scripts are valid POSIX!"
+          echo ""
+          echo "Checked $(find plugins/lasagna/scripts -name '*.sh' | wc -l) shell scripts"

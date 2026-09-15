@@ -1,0 +1,52 @@
+name: 🔍 Plugin Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/lasagna/**'
+      - '.github/workflows/validate.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'plugins/lasagna/**'
+      - '.github/workflows/validate.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    name: Validate Claude Code Plugin
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📦 Install Claude Code CLI
+        run: |
+          npm install -g @anthropic-ai/claude-code
+
+      - name: ✅ Validate plugin structure
+        run: |
+          claude plugin validate ./lasagna-code || claude plugin validate .
+
+      - name: 📋 Verify required files
+        run: |
+          echo "Checking plugin structure..."
+          test -f plugins/lasagna/.claude-plugin/plugin.json && echo "✓ plugin.json found"
+          test -f plugins/lasagna/commands/lasagna.md && echo "✓ lasagna.md command found"
+          test -f plugins/lasagna/hooks/hooks.json && echo "✓ hooks.json found"
+          test -d plugins/lasagna/skills && echo "✓ skills/ directory found"
+          test -d plugins/lasagna/agents && echo "✓ agents/ directory found"
+
+      - name: 📸 Summary
+        if: success()
+        run: |
+          echo "✅ Plugin validation passed!"
+          echo ""
+          echo "Plugin structure:"
+          find plugins/lasagna -type f -name "*.json" -o -name "*.md" | head -20
