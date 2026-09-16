@@ -1,7 +1,7 @@
 
 # 🍝 lasagna-code
 
-![lasagna hero](.github/assets/hero.jpg)
+![lasagna hero](.github/assets/hero.png)
 
 **Layered Spec-Driven Development for Claude Code**
 

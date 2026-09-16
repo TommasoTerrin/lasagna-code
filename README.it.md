@@ -1,6 +1,6 @@
 # 🍝 lasagna — Harness Layered Spec-Driven per Claude Code
 
-![lasagna hero](.github/assets/hero.jpg)
+![lasagna hero](.github/assets/hero.png)
 
 [🇬🇧 English version](README.md) | [🇮🇹 Italiano](README.it.md)
 
