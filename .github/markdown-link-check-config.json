@@ -5,6 +5,18 @@
     },
     {
       "pattern": "^https://github.com/TommasoTerrin/lasagna-code/blob/main"
+    },
+    {
+      "pattern": "linkedin\\.com",
+      "comment": "LinkedIn blocks automated link checkers"
+    },
+    {
+      "pattern": "domainlanguage\\.com",
+      "comment": "Domain blocked automated requests"
+    },
+    {
+      "pattern": "discussions",
+      "comment": "GitHub Discussions not enabled"
     }
   ],
   "timeout": "20s",

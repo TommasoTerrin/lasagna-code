@@ -612,12 +612,12 @@ Future support for:
 
 - [Spec-Driven Development](https://gojko.net/books/specification-by-example/) — Gojko Adzic
 - [Test-Driven Development](https://www.oreilly.com/library/view/test-driven-development/0321146530/) — Kent Beck
-- [Domain-Driven Design](https://www.domainlanguage.com/ddd/) — Eric Evans
+- **Domain-Driven Design** — Eric Evans
 - [Hexagonal / Onion Architecture](https://alistair.cockburn.us/hexagonal-architecture/) — Alistair Cockburn
 
 ### lasagna Design
 
-- Original SDLC harness: [sdlc-harness](https://github.com/TommasoTerrin/lasagna-code/tree/main/sdlc-harness)
+- **SDLC harness** — foundation for spec-driven workflows
 - Loop engineering: [Augment Code](https://augmentcode.com/)
 - Structured prompts: [mattpocock/skills](https://github.com/mattpocock/skills)
 
@@ -691,7 +691,6 @@ lasagna draws from:
 ## 📞 Support
 
 - **Issues & Bugs** → [GitHub Issues](https://github.com/TommasoTerrin/lasagna-code/issues)
-- **Discussions** → [GitHub Discussions](https://github.com/TommasoTerrin/lasagna-code/discussions)
 - **Security** → Email tommaso@terrin.eu with `[SECURITY]` in subject
 
 ---

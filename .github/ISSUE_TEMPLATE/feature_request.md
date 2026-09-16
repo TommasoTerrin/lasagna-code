@@ -28,4 +28,4 @@ Links, examples, proof-of-concept code?
 
 ---
 
-**Tip:** Before submitting, check [GitHub Discussions](https://github.com/TommasoTerrin/lasagna-code/discussions) for related ideas.
+**Tip:** Before submitting, check existing issues and PRs for related work.

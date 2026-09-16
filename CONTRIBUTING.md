@@ -50,7 +50,7 @@ Logs:
 
 ### Suggesting Enhancements
 
-**Before opening:** check [GitHub Discussions](https://github.com/TommasoTerrin/lasagna-code/discussions).
+**Before opening:** check existing issues and PRs for related work.
 
 **When you suggest a feature, include:**
 
@@ -337,7 +337,6 @@ When reviewing a PR, check:
 
 ## ❓ Questions?
 
-- **General questions** → [GitHub Discussions](https://github.com/TommasoTerrin/lasagna-code/discussions)
 - **Bugs** → [GitHub Issues](https://github.com/TommasoTerrin/lasagna-code/issues)
 - **Security** → Email tommaso@terrin.eu with `[SECURITY]` in subject
 
