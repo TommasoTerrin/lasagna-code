@@ -1,11 +1,25 @@
 {
+  "name": "lasagna",
+  "owner": {
+    "name": "Tommaso Terrin",
+    "url": "https://github.com/TommasoTerrin"
+  },
   "plugins": [
     {
       "name": "lasagna",
-      "source": {
-        "source": "github",
-        "repo": "TommasoTerrin/lasagna-code"
-      }
+      "source": "./plugins/lasagna",
+      "description": "Layered spec-driven harness for Claude Code — precise specs, domain models, frozen contracts, and a red-green loop with isolated test and implementation roles.",
+      "version": "0.1.0",
+      "license": "MIT",
+      "keywords": [
+        "spec-driven-development",
+        "tdd",
+        "domain-driven-design",
+        "hexagonal-architecture",
+        "guardrails",
+        "loop-engineering",
+        "layered-architecture"
+      ]
     }
   ]
 }
