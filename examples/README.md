@@ -41,4 +41,4 @@ Poi, dentro il progetto: `claude plugin install lasagna@lasagna`, seguito da
 
 | Progetto | Cosa testa | Stato |
 |---|---|---|
-| `httpskills/` | server MCP (fastmcp) — libreria skill centralizzata via protocollo Agent Skills | da avviare |
+| [`httpskills/`](https://github.com/TommasoTerrin/httpskills) | server MCP (fastmcp) — libreria skill centralizzata via protocollo Agent Skills | scaffolding fatto, spec da scrivere |
