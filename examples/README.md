@@ -41,4 +41,9 @@ Poi, dentro il progetto: `claude plugin install lasagna@lasagna`, seguito da
 
 | Progetto | Cosa testa | Stato |
 |---|---|---|
-| [`httpskills/`](https://github.com/TommasoTerrin/httpskills) | server MCP (fastmcp) — libreria skill centralizzata via protocollo Agent Skills | scaffolding fatto, spec da scrivere |
+| [`httpskills/`](https://github.com/TommasoTerrin/httpskills) | server MCP (fastmcp) — libreria skill centralizzata via protocollo Agent Skills | domain + adapter layer completi, 39 criteri coperti |
+
+Ogni progetto qui dentro spedisce, quando sensato, una propria cartella di
+esempio (es. `skills/` in `httpskills/`) con contenuto dimostrativo reale —
+non un fixture di test isolato, ma qualcosa che il progetto stesso serve
+quando lo avvii così com'è. Il README di ciascun progetto la documenta.
