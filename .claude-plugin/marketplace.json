@@ -1,26 +1,25 @@
 {
   "name": "lasagna",
-  "version": "0.1.0",
-  "shortDescription": "Layered spec-driven harness for Claude Code — precise specs, domain models, frozen contracts, and a red-green loop with isolated test and implementation roles.",
-  "longDescription": "lasagna is a Claude Code plugin that brings structure to software development through spec-driven and test-driven loops. It enforces three human gates, mechanical isolation between test-writer and implementer, a fixed cycle budget per layer, and layering rules on the domain core. Works on greenfield projects and legacy codebases, supports Python/TypeScript/JVM/.NET.",
-  "author": {
-    "name": "tommaso terrin",
+  "owner": {
+    "name": "Tommaso Terrin",
     "url": "https://github.com/TommasoTerrin"
   },
-  "homepage": "https://github.com/TommasoTerrin/lasagna-code",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/TommasoTerrin/lasagna-code.git"
-  },
-  "license": "MIT",
-  "keywords": [
-    "spec-driven-development",
-    "tdd",
-    "domain-driven-design",
-    "hexagonal-architecture",
-    "guardrails",
-    "loop-engineering",
-    "layered-architecture"
-  ],
-  "icon": "🍝"
+  "plugins": [
+    {
+      "name": "lasagna",
+      "source": "./plugins/lasagna",
+      "description": "Layered spec-driven harness for Claude Code — precise specs, domain models, frozen contracts, and a red-green loop with isolated test and implementation roles.",
+      "version": "0.1.0",
+      "license": "MIT",
+      "keywords": [
+        "spec-driven-development",
+        "tdd",
+        "domain-driven-design",
+        "hexagonal-architecture",
+        "guardrails",
+        "loop-engineering",
+        "layered-architecture"
+      ]
+    }
+  ]
 }
