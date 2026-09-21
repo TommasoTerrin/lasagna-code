@@ -464,59 +464,43 @@ Spec (gate) → Design (gate) → TDD Loop (isolated agents, budget, hooks) → 
 - [x] Cycle budgets and traceability
 - [x] Onion layering rules (with baseline for legacy)
 
-### Phase 2: GitHub Integration (Q4 2026)
+### Phase 2: GitHub Integration
 
-#### Auto-start from Issues
-```bash
-# Fetch issue, extract AC, create spec, start flow
-claude plugin github issues TommasoTerrin/my-project#42
-→ /lasagna official (auto-routed to bug or feature flow)
-```
-
-#### AC from Issue Comments
-```
-GitHub Issue #42:
-  Title: User can't login with special chars
-  
-  /lasagna
-  AC: User should login with password containing: !@#$%^&*()
-  AC: Error message should be clear if password invalid
-```
-
-#### Auto-Map AC → Tests
-```bash
-/lasagna-status
-# Shows: Issue #42 → AC-42-001,002 → test_issue_42_001...
-# Checks: PR#XXX closes issue #42 if all AC covered
-```
-
-#### Inline PR Comments from Adversarial Review
-```
-PR Review by lasagna:
-└─ adversarial-review found:
-   ├─ Missing error path: "invalid charset in password" 
-   │  Suggestion: add test_ac_42_001_with_emoji_password
-   └─ Volume edge: 1000 failed logins → DDoS vector
-      Suggestion: rate-limit by IP in adapter
-```
+- Start a flow directly from a GitHub issue: fetch it, extract acceptance criteria from the body or comments, create the spec, and route to the right flow (`/lasagna official`, bugfix, ...).
+- Extend the existing AC ↔ test traceability check to GitHub: `/lasagna-status` reports which issue an AC belongs to, and whether a PR closes it once every AC is covered.
+- Post adversarial-review findings as inline PR comments, so gaps surface where the reviewer is already looking.
 
 ---
 
-### Phase 3: Multi-Agent Orchestration (Q1 2027)
+### Phase 3: Adaptive System Design
 
-- **Parallel testing**: multiple test-writers per AC (vote on coverage)
-- **Reference implementation**: fourth agent writes reference code, referee compares
-- **Mutation testing**: fourth agent writes mutants, tests catch them
-- **Cost tracking**: estimate and track per-cycle costs in Claude API tokens
+- **System-design guidance over a fixed catalog**: rather than hard-coding a list of architecture profiles, extend the `grilling`/`domain-modeling` prompts so the model reasons about *how strong* the business/infrastructure separation should be, and *which* system-design pattern (layered, pipeline, modular monolith, service-oriented, ...) actually fits the project at hand. LLMs already carry this knowledge — the harness should coach the *how to decide*, not enumerate the *what to pick from*.
 
 ---
 
-### Phase 4: Workspace & Team Sync (Q2 2027)
+### Phase 4: Quality Signal & Spend Control
 
-- **Shared contracts**: freeze contract, share with team
-- **Async handoff**: test-writer → implementer without real-time chat
-- **Workflow replay**: save and replay sessions for onboarding
-- **Integration**: Slack notifications, Linear/Asana board updates, ADR sync to docs
+- **[jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev)-style binary classification**: a fast, calibrated model that answers one question at existing decision points (test-outcome capture, `referee`, `adversarial-review`) — *given the spec, the frozen contract, and the current state, is this test/code valid against what was actually written?* Meant to replace today's textual heuristic (see Known Limitations) with a real classifier, not to write code or tests itself.
+- **Model & spend control**: route this kind of mechanical classification to cheap/fast models, reserve stronger models for spec, domain-modeling and implementation, and track per-cycle cost so budget overruns are visible before they're a surprise. Mechanism still to be designed.
+
+---
+
+### Phase 5: Modularity & Extensibility
+
+- **Independent phase evolution**: decouple skills/agents/hooks/templates enough that each phase (grilling, contract, tdd-loop, adversarial-review, deploy, ...) can change without rippling into the others.
+- **Org-level extensions without forking**: a layer where a team can inject its own context, conventions and questions into grilling/spec/review without editing the plugin's own files (which get overwritten on update).
+
+---
+
+### Phase 6: Deploy & DevOps
+
+- **CI/CD & IaC support** (Docker, Terraform or similar) after the PR gate, kept independent of whichever system-design pattern the project actually uses — deploy shouldn't assume ports-and-adapters specifically.
+
+---
+
+### Phase 7: Beyond Claude Code
+
+- **Adapted variants for other agent tools**: rather than one abstracted engine, ship sibling folders that reproduce lasagna's mechanics (hooks, gates, isolation) using each tool's own primitives; people pull from the repo whichever variant matches the tool they use.
 
 ---
 
@@ -696,7 +680,3 @@ lasagna draws from:
 ---
 
 **Made with ❤️ for developers who love structure, not chaos.**
-=======
-# lasagna-code
-Layered Spec-Driven Harness for Claude Code — precise specs, frozen contracts, red-green loop with isolated test/implementation roles.
->>>>>>> 74de07c6743154f6d7c9fdb62766006b0b639b21
