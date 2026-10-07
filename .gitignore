@@ -19,3 +19,14 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.log
+
+# claude plugin eval output (baselines worth keeping go to plugins/lasagna/evals/baselines/)
+plugins/lasagna/evals/results/
+
+# Python
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+# run.sh fallback cache of the Python path (when CLAUDE_PLUGIN_DATA is unset)
+plugins/lasagna/.python-path

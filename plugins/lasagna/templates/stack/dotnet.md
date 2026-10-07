@@ -26,25 +26,15 @@ pass_pattern: (Passed! *-|Failed: *0)
 test_path: tests/
 test_file_pattern: \.Tests?/|Tests?\.cs$|Spec\.cs$
 
-core_path: src/Domain/
-core_path: src/Ports/
+Where production code lives: the test-writer may not read it during tdd-loop.
 
-## Layering rules
-
-core_allowed_import: .Domain
-core_allowed_import: .Ports
-core_allowed_import: System.Collections
-core_allowed_import: System.Linq
-
-core_forbidden_pattern: DateTime\.(Now|UtcNow)|DateTimeOffset\.(Now|UtcNow)|Stopwatch
-core_forbidden_pattern: new Random|Guid\.NewGuid|RandomNumberGenerator
-core_forbidden_pattern: File\.|Directory\.|Environment\.GetEnvironmentVariable
-core_forbidden_pattern: HttpClient|Console\.Write
+source_path: src/
 
 ## Budget and closing
 
-budget_domain: 3
-budget_adapter: 5
+budget_core: 3
+budget_shell: 5
+budget_bugfix: 5
 git_host: github
 issue_cli: gh
 bugfix_automerge: false
@@ -52,11 +42,11 @@ bugfix_automerge: false
 ## Project layout
 
 adr_dir: docs/adr
-context_file: CONTEXT.md
+context_dir: docs/context
 
 ## Guardrails to switch off
 
-Empty means all active. Names: block-tests, onion, test-result, budget,
-precompact, session-status.
+Empty means all active. Names: block-tests, block-test-reads, block-code-reads,
+test-result, budget, precompact, session-status.
 
 hooks_disabled:

@@ -102,12 +102,19 @@ git checkout -b feature/what-you-are-adding
 **For skills/agents:**
 - Edit `.md` files in `plugins/lasagna/skills/` or `plugins/lasagna/agents/`
 - Keep prompts concise and unambiguous
-- Test by running `/lasagna` flows end-to-end
+- Prove the change with the eval suite: a case that fails before and passes after
+  (`plugins/lasagna/evals/`)
 
 **For hooks/scripts:**
-- POSIX sh (no jq, Python, Node — must run anywhere)
-- Test on macOS, Linux, Windows (Git Bash or WSL)
-- Document environment variables at top of file
+- Python ≥ 3.9, **standard library only** — users never `pip install` anything
+- Decisions go in `scripts/lasagna_lib/core/` as **pure functions** (text and
+  dicts in, a decision out), tested by passing values, no mocks; I/O goes in
+  `scripts/lasagna_lib/shell/`
+- `scripts/run.sh` is the only shell script: it finds Python and nothing else
+- A blocking hook exits 0 or 2, never anything else: any other code is a
+  non-blocking error to Claude Code, and the guardrail would vanish silently
+- Hooks only where a mechanical truth is needed (test outcome, isolation,
+  budget, state). Architecture and style are the model's judgement
 
 **For templates:**
 - Keep minimal but complete
@@ -118,16 +125,19 @@ git checkout -b feature/what-you-are-adding
 
 ```bash
 # Validate plugin structure
-claude plugin validate ./lasagna-code
+claude plugin validate .
 
-# Test a skill
-/lasagna official
-# Go through one flow, check for typos or logic errors
+# Hooks: lint and tests (pytest and ruff are dev tools, not plugin dependencies)
+ruff check plugins/lasagna/scripts tests tools
+python -m pytest
 
-# Test hooks on your stack
+# Try a hook by hand
 export CLAUDE_PROJECT_DIR=/path/to/test/project
-bash plugins/lasagna/scripts/block-test-edits.sh
-bash plugins/lasagna/scripts/check-onion.sh
+echo '{"tool_name":"Read","agent_type":"lasagna:implementer","tool_input":{"file_path":"tests/test_x.py"}}' \
+  | sh plugins/lasagna/scripts/run.sh hook block-reads; echo "exit $?"
+
+# Skills and agents: the fast eval suite (from a terminal where claude is logged in)
+cd plugins/lasagna && claude plugin eval . --tag fast --scaffold --allow-tools Write Edit --no-publish
 ```
 
 #### 4. Commit & Push
@@ -188,7 +198,8 @@ How did you test it? Include steps to reproduce.
 - [ ] Commit message follows format
 - [ ] No breaking changes (or documented in PR)
 - [ ] Skills/agents are concise and unambiguous
-- [ ] Scripts are POSIX sh (no dependencies)
+- [ ] Hook code: Python stdlib only, decisions in `core/` with tests, `pytest` green
+- [ ] Skill/agent changes: fast eval suite run, no case regressed
 - [ ] New templates include examples
 - [ ] Changes tested on target stack (Python/TS/JVM/.NET)
 
@@ -235,12 +246,14 @@ cp plugins/lasagna/templates/stack/typescript.md plugins/lasagna/templates/stack
 
 # Edit:
 # - test_command: go test ./...
-# - test_file_pattern: **/*_test.go
-# - core_path_pattern: internal/(domain|model)/
-# - forbidden_patterns: regex for I/O you want to block
+# - test_command_pattern, fail_*_pattern, pass_pattern: for the runner's output
+# - test_file_pattern: _test\.go$
+# - source_path: where production code lives
 ```
 
-Include test output samples so hook can classify green/red.
+Add real runner output to `tools/capture_golden.py` (it runs the runner on tiny
+projects and records the outcome) so `tests/core/test_golden.py` verifies your
+patterns. Never transcribe output by hand.
 
 **Submit as:** PR with new stack profile + documentation
 
@@ -301,14 +314,21 @@ ln -s $(pwd) ~/.claude/plugins/lasagna-dev
 
 ```bash
 # Validate plugin
-claude plugin validate ./
+claude plugin validate .
 
-# Test individual hook (Unix/Linux/macOS)
-bash plugins/lasagna/scripts/block-test-edits.sh
+# Hook tests: core (pure, fast) and shell (runs run.sh end to end)
+python -m pytest
+python -m pytest tests/core        # only the pure ones
 
-# On Windows (Git Bash)
-bash plugins/lasagna/scripts/block-test-edits.sh
+# Regenerate golden runner outputs (needs the runners installed)
+python tools/capture_golden.py
+
+# Eval suite, and comparing two versions of the plugin
+# see plugins/lasagna/evals/README.md
 ```
+
+CI runs ruff and pytest on Python 3.9 and 3.12, on Ubuntu and Windows, and
+shellcheck on `run.sh`.
 
 ### Iterate
 
@@ -328,7 +348,7 @@ When reviewing a PR, check:
 - [ ] **Completeness**: No half-finished implementations
 - [ ] **Compatibility**: Works across Python/TypeScript/JVM/.NET stacks
 - [ ] **Backward compat**: No breaking changes without documentation
-- [ ] **Scripts**: POSIX sh only, no external dependencies
+- [ ] **Hooks**: Python stdlib only, pure decisions in `core/` with tests, exit codes 0/2 only
 - [ ] **Testing**: Tested on multiple stacks/OS
 - [ ] **Docs**: README/comments explain new behavior
 - [ ] **Commit message**: Follows format, links issues

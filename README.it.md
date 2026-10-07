@@ -6,13 +6,23 @@
 
 > **Nota:** Questa è una versione semplificata. Per documentazione completa, roadmap e diagrammi, vedi la [versione inglese](README.md).
 
-**L'opposto dello spaghetti code.** Un plugin per Claude Code che porta struttura allo sviluppo software attraverso specifiche precise, modellazione del dominio, contratti congelati e un ciclo rosso-verde con **ruoli di test e implementazione isolati meccanicamente**.
+**L'opposto dello spaghetti code.** Un plugin per Claude Code che porta struttura allo sviluppo software attraverso specifiche precise, contratti congelati e un ciclo rosso-verde in cui **chi scrive il test e chi scrive il codice sono separati meccanicamente**.
 
-- **Spec-driven**: inizia con una spec precisa approvata da un umano. Il domain model ne deriva. Il contratto si congela prima di qualunque codice.
-- **Test-driven**: un test per ciclo, scritto senza vedere l'implementazione. Chi scrive il test e chi implementa non condividono mai il contesto.
-- **Layered**: il core del dominio è puro (senza I/O, senza clock), gli adapter toccano il mondo. Le regole di layering sono applicate ad ogni scrittura.
-- **Protetto**: tre gate umani, isolamento meccanico via hook, budget di cicli fisso, e tracciabilità dai criteri di accettazione ai test.
-- **Stack-agnostico**: Python/TypeScript/JVM/.NET. Progetti greenfield e codebase legacy.
+lasagna è **rigido sul processo e flessibile sull'architettura**.
+
+- **Spec-driven**: si parte da una spec precisa approvata da un umano. Il contratto si congela prima di qualunque codice.
+- **Test-driven, per fette verticali**: un test per ciclo, rosso osservato prima del verde. Ogni fetta attraversa tutto (logica, shell, integrazione); la prima è un *tracer bullet* end-to-end.
+- **Agenti isolati davvero**: il test-writer non può leggere il codice di produzione, l'implementer non può né leggere né scrivere i test. Lo impediscono degli hook.
+- **Architettura in proporzione**: il principio preferito è *functional core, imperative shell* (logica pura al centro, I/O ai bordi), applicato nel livello che il progetto richiede — *minimo*, *modulare*, *esagonale completo*. Sui progetti esistenti lasagna **adotta le convenzioni che trova** invece di convertirle.
+- **Protetto**: tre gate umani, budget di cicli per criterio, tracciabilità dai criteri di accettazione ai test.
+- **Stack-agnostico**: Python/TypeScript/JVM/.NET. Progetti nuovi e codebase esistenti.
+
+---
+
+## Requisiti
+
+- Claude Code con supporto ai plugin.
+- **Python ≥ 3.9** sulla macchina, solo libreria standard (niente `pip install`): gli hook sono in Python. lasagna cerca `python3`, `python`, `py -3` la prima volta e ricorda quello trovato (`run.sh python` lo mostra, `run.sh python --reset` lo ricerca, `run.sh python <percorso>` lo imposta). Senza Python, in un progetto lasagna i guardrail bloccanti **falliscono chiusi**, e l'avvio di sessione lo segnala.
 
 ---
 
@@ -20,30 +30,36 @@
 
 I quattro flussi principali:
 
-1. **Ufficiale** (feature decisa): intervista → spec → domain model → contratto congelato → loop rosso-verde (budget 3) → revisione avversariale → adapter → gate PR → merge.
-2. **Prototipo** (idea incerta): intervista ridotta → prototipo → validazione → se sì, riunisciti al flusso ufficiale.
-3. **Bugfix** (difetto in codice che funziona): caratterizza il comportamento attuale → scrivi il test che riproduce il bug (rosso) → loop (budget 5) → revisione → merge.
-4. **Brownfield** (codice legacy senza spec): reverse-engineer la spec dal codice → umano conferma cosa è voluto vs bug vs codice morto → riunisciti al flusso ufficiale.
+1. **Ufficiale** (feature decisa): intervista → spec con le fette → modello di dominio → contratto congelato → loop rosso-verde fetta per fetta (core budget 3, shell budget 5) → revisione avversariale → gate PR → merge.
+2. **Prototipo** (idea incerta): intervista ridotta → prototipo → validazione → se sì, rientra come brownfield.
+3. **Bugfix** (difetto in codice che funziona): caratterizza il comportamento attuale → test che riproduce il bug (rosso) → loop (budget 5) → revisione → merge.
+4. **Brownfield** (codice esistente senza spec): rileva le convenzioni del progetto → ricostruisci la spec dal codice → l'umano conferma cosa è voluto vs bug vs codice morto → si prosegue come ufficiale, seguendo le convenzioni rilevate.
 
-Ogni flusso ha un **gate finale obbligatorio** (revisione PR), salvo il bugfix che può auto-mergare se configurato.
+Ogni flusso ha un **gate finale obbligatorio** (revisione PR), salvo il bugfix che può fare auto-merge se configurato.
 
 ---
 
 ## Cosa è applicato, cosa no
 
-### Meccanico (hook + script, sempre attivo a meno di disattivazione)
+### Meccanico (hook, sempre attivo salvo disattivazione)
 
-- **Blocco di scrittura test**: l'implementer non può editare file di test, mai. Applicato da un hook ad ogni `Edit`/`Write`.
-- **Budget di cicli**: il layer dominio ha 3 tentativi dell'implementer, gli adapter ne hanno 5. Un hook conta ad ogni completamento.
-- **Regole di layering**: il core del dominio non può importare infrastruttura né toccare I/O/clock/casualità. Applicato ad ogni scrittura. Su codebase legacy, le violazioni sono raccolte in una baseline e solo le nuove bloccano.
-- **Cattura dell'esito test**: ogni test è classificato (verde / rosso-compile / rosso-assertion / sconosciuto) e registrato nello stato della fase.
-- **Tracciabilità**: ogni criterio di accettazione `AC-<feature>-NNN` deve apparire nei file di test, e viceversa. Uno script per controllare entrambe le direzioni.
+Solo dove serve una verità meccanica:
 
-### Basato su prompt (skill e agent, seguiti in contesto, non applicati)
+- **Blocco scrittura test**: l'implementer non può modificare file di test.
+- **Blocco lettura test**: l'implementer non può leggere i file di test (Read/Grep/Glob e comandi Bash che li citano). Eseguire la suite è sempre permesso: l'output del fallimento è informazione, non accesso al file.
+- **Blocco lettura codice**: durante `tdd-loop` il test-writer non può leggere il codice di produzione (`source_path`). Non vale in `characterize` (bugfix, brownfield), dove leggere il codice è il lavoro.
+- **Cattura dell'esito test**: ogni esecuzione è classificata (verde / rosso-compile / rosso-assertion / rosso-generico / sconosciuto) dall'output reale.
+- **Budget per criterio**: 3 tentativi sui test del core, 5 su shell, integrazione e bugfix. Il conteggio si azzera quando un criterio diventa verde; esaurito il budget, escalation a un umano.
+- **Stato della fase**: salvato prima della compattazione, mostrato all'avvio di sessione.
+- **Tracciabilità**: ogni `AC-<feature>-NNN` deve comparire nei test, e viceversa (`run.sh check-traceability`).
 
-- **Isolamento**: chi scrive il test vede solo il criterio e il contratto congelato, mai l'implementazione. Chi implementa vede solo il test e il contratto, mai la spec. L'arbitro vede tutti e tre, decide uno.
-- **Proporzionalità**: ogni fase è sottoposta al deletion test — se la sua complessità ricompare da qualche altra parte quando la salti, la esegui; se no, la salti e dichiara il salto.
-- **Purezza del dominio**: gli value object sono testati tramite deletion; gli aggregati derivano dagli invarianti, non dallo schema.
+**Limite dichiarato:** il filtro sui comandi Bash è euristico — un comando creativo può aggirarlo. È un ostacolo, non un muro.
+
+### Giudizio (skill e agenti, non controllato da hook)
+
+- **Architettura**: livello di separazione, dove stanno core e shell, convenzioni. Scritto in `.lasagna/architecture.md`, letto da contratto, implementer e reviewer. Nessun hook lo legge.
+- **Proporzionalità**: ogni fase passa il *deletion test* — se saltandola la sua complessità ricompare altrove, la si esegue; altrimenti la si salta e lo si dichiara.
+- **Test di qualità**: gerarchia dei test double (reale → fake → stub → mock), niente mock di tipi di terze parti, niente test che ricalcano la struttura del codice, test ermetici (dai principi di *Testing on the Toilet* di Google).
 
 ---
 
@@ -64,148 +80,80 @@ Nel tuo progetto:
 /lasagna-init
 ```
 
-Scegli il tuo stack (Python/TypeScript/JVM/.NET) o lascia che lo rilevi. Lo script di init crea `.lasagna/`, scrive il profilo dello stack, aggiorna `.gitignore`, e riporta tutto quello che ha aggiunto.
+Verifica Python, rileva lo stack, crea `.lasagna/` (profilo, `architecture.md` vuoto), `docs/context/INDEX.md`, aggiorna `.gitignore` e riporta tutto quello che ha aggiunto. Propone una riga per `CLAUDE.md` e la aggiunge solo con il tuo consenso.
 
-**Ogni guardrail rimane inattivo finché non esiste il profilo dello stack.** Se lo script dice "NOT ready", il profilo manca — scrivilo prima di fare affidamento su qualunque hook.
+**Ogni guardrail rimane inattivo finché non esiste il profilo dello stack.** Se `init` dice "NOT ready", il profilo manca — scrivilo prima di fare affidamento su qualunque hook.
 
 ---
 
 ## Utilizzo
 
-### Inizia una feature
-
 ```bash
 /lasagna official
-```
-
-oppure
-
-```bash
 /lasagna prototype
 /lasagna bugfix
 /lasagna brownfield
-```
-
-L'harness ti instrada verso il flusso corretto in base allo stato in `.lasagna/state/FEAT-NNN.state.md` e ti fa domande.
-
-### Controlla lo stato
-
-```bash
 /lasagna-status
 ```
 
-Mostra: id feature, fase, cicli usati, criteri coperti, escalation (se presente), checkpoint successivo.
+L'harness instrada verso il flusso corretto in base allo stato in `.lasagna/state/FEAT-NNN.state.md`. `/lasagna-status` mostra fase, fetta corrente, livello architetturale, contesti caricati, cicli sul criterio in corso, criteri coperti ed eventuali escalation.
 
 ---
 
 ## File chiave nell'harness
 
-### Skill (10 workflow)
+### Skill (10)
 
-- **grilling**: Intervista socratica in round, scopre il profilo dello stack e i vincoli architetturali.
-- **to-spec**: Use case Jacobson, criteri di accettazione con id, tassonomia degli errori, piano di rollback.
-- **domain-modeling**: Aggregati dagli invarianti, deletion test per value object, aggiorna `CONTEXT.md`.
-- **freeze-contract**: Firme pubbliche, tipi di errore, convenzione di ritorno, porte richieste, vista unica della seam.
-- **tdd-loop**: Orchestra test-writer e implementer, osserva il rosso, conta i cicli, chiama l'arbitro su ambiguità.
-- **adversarial-review**: Caccia i buchi che il test verde nasconde: percorsi di errore mancanti, stress di invarianti, edge di volume, idempotenza.
-- **ports-adapters**: Fase adapter, infrastruttura vera, traduce gli errori del fornitore nei tipi del contratto.
-- **characterize-bugfix**: Flusso bug senza spec: fissa il comportamento attuale, riproduci il bug, poi tdd-loop.
-- **reverse-spec-brownfield**: Reverse-engineer la spec dal codice legacy, ricostruisci i use case e il modello di entità.
-- **handoff**: Comprimi la sessione in un documento prima della compattazione del contesto.
+- **grilling**: intervista socratica: profilo dello stack, livello di separazione (una volta per progetto, con raccomandazione), contesti toccati, i quattro assi architetturali.
+- **to-spec**: use case Jacobson, criteri con id, tassonomia degli errori, **fette verticali** (la prima è un tracer bullet).
+- **domain-modeling**: regole, invarianti e modulo in cui vive ciascuna; aggregati solo quando serve consistenza atomica; aggiorna i glossari in `docs/context/`.
+- **freeze-contract**: firme, tipi di errore, convenzione di ritorno, **dipendenze esterne** e come i test le controllano.
+- **tdd-loop**: fetta per fetta, core → shell → integrazione; test-writer e implementer isolati, rosso osservato, budget per criterio.
+- **adversarial-review**: buchi nei test, codice non richiesto, deriva dal design, rischi non coperti dalla spec.
+- **pr-gate**: gate 3: diff della spec, tracciabilità, report, cicli; dopo il merge archivia la spec.
+- **characterize-bugfix**: fissa il comportamento attuale, riproduci il bug, poi tdd-loop.
+- **reverse-spec-brownfield**: rileva le convenzioni (→ `architecture.md`), ricostruisce la spec dal codice; le proposte vanno in `design-notes.md`, non applicate.
+- **handoff**: comprime la sessione in un documento prima della compattazione.
 
-### Agent (4 ruoli)
+### Agenti (4)
 
-- **test-writer**: Scrive un test per ciclo da un criterio e dal contratto congelato. Osserva il rosso.
-- **implementer**: Scrive il minimo per passare il test. Non può modificare file di test (l'hook lo blocca). Vede solo contratto e test.
-- **referee**: Risolve una controversia su asserzione: test sbagliato, codice sbagliato, o criterio ambiguo.
-- **adversarial-reviewer**: Caccia i buchi dopo il verde. Ha tutto il contesto (spec, codice, test) ma no strumento `Write`.
+- **test-writer**: un test per ciclo da un criterio e dal contratto, senza vedere il codice. Osserva il rosso.
+- **implementer**: il minimo per far passare il test, partendo da contratto e output del fallimento; non può leggere né scrivere i test.
+- **referee**: risolve una disputa su un'asserzione: test sbagliato, codice sbagliato, o criterio ambiguo (→ umano).
+- **adversarial-reviewer**: vede tutto, non scrive nulla; cerca buchi e deriva dal design.
 
-### Comandi (3)
+### Hook (6, disattivabili)
 
-- **/lasagna**: Punto di ingresso. Instrada fra i flussi, orchestra.
-- **/lasagna-init**: Bootstrap: rileva lo stack, crea `.lasagna/`, scrive il profilo.
-- **/lasagna-status**: Riporta senza cambiare.
-
-### Hook (5, possono essere disattivati)
-
-- **SessionStart**: Stampa lo stato dell'harness (forte se il profilo manca, silenzioso altrimenti).
-- **PreToolUse** su Edit/Write: Blocca l'implementer da modificare file di test.
-- **PostToolUse** su Bash: Classifica l'esito del test (verde / rosso-compile / rosso-assertion / sconosciuto).
-- **PostToolUse** su Edit/Write: Regole di layering sul core del dominio.
-- **SubagentStop** su implementer: Conta i cicli, escalate quando il budget è esaurito.
-- **PreCompact**: Fissa lo stato della fase prima della compattazione del contesto.
-
-### Template (4 tipi)
-
-- **Spec**: Goal, non-goal, vincoli architetturali, use case Jacobson, criteri di accettazione, invarianti, tassonomia degli errori.
-- **Contract**: Seam, firme, tipi, mapping degli errori, convenzione di ritorno, porte richieste, "cosa NON è congelato".
-- **ADR**: Architecture Decision Record, per scelte difficili da invertire e sorprendenti con trade-off.
-- **Profili dello stack** (Python / TypeScript / JVM / .NET): Comando test, pattern di esito, percorsi di test, percorsi di core, pattern proibiti (I/O, clock, ecc.), budget.
+`hooks_disabled:` nel profilo. Nomi: `block-tests`, `block-test-reads`, `block-code-reads`, `test-result`, `budget`, `precompact`, `session-status`.
 
 ---
 
-## Per codice legacy (brownfield)
+## Percorsi del progetto (configurabili)
 
-L'harness funziona su progetti esistenti, ma le regole di layering iniziano **difensive** per evitare rumore.
-
-Quando inizializzi su una codebase legacy:
-
-```bash
-sh plugins/lasagna/scripts/onion-baseline.sh
-```
-
-Questo registra tutte le violazioni attuali come baseline. Da allora, solo le **nuove** violazioni bloccano. La baseline è committata — il suo diff è come i reviewer vedono se stai aggiungendo debito o pagandolo.
-
-Per controllare il drift (stiamo migliorando o peggiorando?):
-
-```bash
-sh plugins/lasagna/scripts/onion-baseline.sh --check
-```
-
----
-
-## Path del progetto (configurabili)
-
-Per default:
-
-- Spec: `.lasagna/specs/`
-- Contratti: `.lasagna/contracts/`
-- Stato della fase: `.lasagna/state/` (gitignored)
+- Spec: `.lasagna/specs/` · Contratti: `.lasagna/contracts/` · Stato: `.lasagna/state/` (gitignored)
+- Architettura e proposte: `.lasagna/architecture.md`, `.lasagna/design-notes.md`
 - ADR: `docs/adr/`
-- Glossario: `CONTEXT.md`
+- Contesto di progetto: `docs/context/` — `INDEX.md`, un glossario per bounded context, `structure.md`
 
-Cambia `adr_dir` e `context_file` nel profilo dello stack se questi entrano in collisione con il tuo layout. Per monorepo, imposta la variabile d'ambiente `LASAGNA_DIR` per puntare l'harness a un package diverso.
+Cambia `adr_dir` e `context_dir` nel profilo se entrano in collisione con il tuo layout. Per monorepo, `LASAGNA_DIR` punta l'harness a un package diverso. I profili v1 continuano a funzionare: le chiavi vecchie sono mappate o ignorate, e l'avvio di sessione suggerisce di aggiornarle.
 
 ---
 
-## Guardrail che puoi disattivare
+## Valutare il plugin
 
-Nel profilo dello stack, `hooks_disabled: onion, block-tests` li spegne. Nomi noti:
-
-- `block-tests`: Previeni all'implementer di editare file di test.
-- `onion`: Regole di layering del dominio.
-- `test-result`: Cattura l'esito del test.
-- `budget`: Conta i cicli.
-- `precompact`: Fissa lo stato della fase prima della compattazione.
-- `session-status`: Stampa lo stato dell'harness all'inizio della sessione.
+`plugins/lasagna/evals/` contiene una suite per `claude plugin eval` (instradamento, gate, isolamento, proporzionalità, adattamento al codice esistente, livello di separazione, un caso end-to-end). Ogni caso gira anche **senza** plugin, così ogni punteggio ha il suo delta. Vedi [plugins/lasagna/evals/README.md](plugins/lasagna/evals/README.md).
 
 ---
 
 ## Limiti noti
 
-- **Nessun auto-merge nel flusso ufficiale** (i 3 gate sono decisioni umane). Il flusso bugfix può auto-mergare se configurato.
-- **I subagent non possono avviare altri subagent**, quindi l'orchestrazione (il comando `/lasagna`) gira nel thread principale.
-- **Gli hook leggono il profilo dello stack ad ogni uso** — i cambiamenti vengono presi immediatamente, ma un profilo mancante rende ogni hook un'operazione silenziosa (l'hook SessionStart avverte su questo).
-- **La classificazione dell'esito del test è testuale, non semantica** — un test che asserisce su una stringa come "ModuleNotFoundError" potrebbe essere misclassificato come rosso-compile invece di rosso-assertion. Questo è un suggerimento per l'arbitro, mai un verdetto.
-
----
-
-## Per chi è
-
-- **Sviluppatori** che vogliono guardrail, non caos. Ottieni isolamento meccanico fra test e implementazione, un budget fisso per layer, e tracciabilità da spec a test.
-- **Team** che fanno sviluppo specification-first. Il gate di approvazione della spec + domain modeling assicurano che tutti si allineino sul modello prima di qualunque codice.
-- **Progetti legacy** che hanno bisogno di struttura senza il dolore di refactoizzare tutto in una volta. La baseline del ratchet ti lascia congelare il debito e pagarlo incrementalmente.
-- **Org poliglotte**. Un harness, cinque profili di stack. Scegli il tuo linguaggio; i flussi sono identici.
+- **Nessun auto-merge nel flusso ufficiale** (i 3 gate sono decisioni umane).
+- **I subagent non possono avviare altri subagent**: l'orchestrazione gira nel thread principale.
+- **Senza profilo dello stack** ogni hook è un'operazione silenziosa (l'avvio di sessione lo segnala).
+- **Serve Python ≥ 3.9**.
+- **Il filtro Bash è euristico**.
+- **La classificazione dell'esito è testuale**: un test che asserisce sulla stringa "ModuleNotFoundError" può essere classificato male. È un suggerimento per l'arbitro, mai un verdetto.
+- **Un solo sviluppatore**: id delle feature e stato non sono ancora pensati per i team.
 
 ---
 
@@ -217,11 +165,12 @@ MIT. Vedi [LICENSE](LICENSE).
 
 ## Derivato da
 
-- **Spec-Driven Development**: L'approccio specification-first di Gojko Adzic.
-- **Test-Driven Development**: La disciplina rosso-verde-refactor di Kent Beck.
-- **Domain-Driven Design**: Ubiquitous language e aggregati di Eric Evans.
-- **Hexagonal / Onion Architecture**: Port e adapter di Alistair Cockburn.
-- **Loop Engineering**: Orchestrazione di agent iterativa di Augment Code.
+- **Spec-Driven Development**: l'approccio specification-first di Gojko Adzic.
+- **Test-Driven Development**: la disciplina rosso-verde-refactor di Kent Beck.
+- **Functional Core, Imperative Shell**: Gary Bernhardt, *Boundaries*.
+- **Hexagonal Architecture** (Alistair Cockburn) e **Domain-Driven Design** (Eric Evans).
+- **Testing on the Toilet**: i consigli di testing di Google.
+- **Loop Engineering**: orchestrazione iterativa di agenti di Augment Code.
 
 ---
 

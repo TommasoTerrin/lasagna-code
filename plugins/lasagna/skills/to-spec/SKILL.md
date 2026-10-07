@@ -1,6 +1,6 @@
 ---
 name: to-spec
-description: Turns a finished grilling into a lasagna spec (Jacobson use cases, criteria with ids, invariants, error taxonomy, rollback plan) and runs the spec approval gate. Use after grilling closes, or when a requirement changes while work is open.
+description: Turns a finished grilling into a lasagna spec (Jacobson use cases, criteria with ids, invariants, error taxonomy, vertical slices, rollback plan) and runs the spec approval gate. Use after grilling closes, or when a requirement changes while work is open.
 ---
 
 # to-spec
@@ -13,16 +13,38 @@ skill synthesises, it does not discover.
 
 ## Procedure
 
-1. Read `CONTEXT.md` and use its vocabulary throughout. A term you need that is
-   not there is a signal for `domain-modeling`, not a licence to invent a synonym.
+1. Read the project context: `docs/context/INDEX.md` (the profile's
+   `context_dir`), then **only** the contexts the grilling settled on. Use their
+   vocabulary throughout. A term you need that is not there is a signal for
+   `domain-modeling`, not a licence to invent a synonym.
+   (A v1 profile with `context_file` and no `context_dir`: that one file is the
+   whole context.)
 2. Read the ADRs in `docs/adr/` touching the area. The spec cannot contradict
    one silently; if it must, that ADR is being superseded and the spec says so.
 3. Assign `FEAT-NNN`, the next free number in `.lasagna/specs/`.
-4. Fill `${CLAUDE_PLUGIN_ROOT}/templates/spec.md` into `.lasagna/specs/FEAT-NNN.md`.
-   The template carries the format — do not restate it, follow it.
-5. Create the phase state from `templates/phase-state.md` at
-   `.lasagna/state/FEAT-NNN.state.md`, `phase: gate-spec`.
-6. Stop at the gate.
+4. Fill `${CLAUDE_PLUGIN_ROOT}/templates/spec.md` into `.lasagna/specs/FEAT-NNN.md`,
+   with `contexts:` set. The template carries the format — follow it.
+5. **Cut the work into vertical slices** (template section "Slices"). See below.
+6. Create the phase state from `templates/phase-state.md` at
+   `.lasagna/state/FEAT-NNN.state.md`, `phase: gate-spec`, `contexts:` copied
+   from the spec.
+7. Stop at the gate.
+
+## Slices
+
+A slice is a thin path through **everything** a user would touch — the logic,
+the code around it, and the outside world when its criteria need it — not a
+layer. Never "all the logic first, then all the integration": the logic would be
+tested against an integration nobody has built yet.
+
+- **S1 is the tracer bullet**: the thinnest end-to-end path through every layer
+  the feature will use — from the system's edge to storage and back. Its logic
+  can be almost trivial; its job is to prove the wiring early, while changing it
+  is still cheap.
+- Each later slice adds one criterion or a small coherent group, and is
+  demoable on its own.
+- Mark the slices that touch the outside world: they need an integration test
+  against real infrastructure.
 
 ## The three things that actually go wrong here
 
@@ -59,8 +81,9 @@ changes mid-loop:
 because it "looks obvious".
 
 Present compactly: goal and non-goals; the four architectural assumptions
-(consistency, contention, partial failure, volumes) in one line each; the list of
-criterion ids with titles, not full text; blocking open questions.
+(consistency, contention, partial failure, volumes) in one line each; the
+contexts touched; the slices in order, with their criterion ids and titles;
+blocking open questions.
 
 Then ask for approval explicitly. When it comes: write `approved_by` and the
 date into the spec, move the phase state to `phase: domain-modeling`, and invoke

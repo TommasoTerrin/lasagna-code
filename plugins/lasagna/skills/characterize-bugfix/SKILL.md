@@ -25,6 +25,14 @@ the official flow.
 
 ## 2. Safety net: characterization tests
 
+```bash
+sh "${CLAUDE_PLUGIN_ROOT}/scripts/run.sh" set-state flow bugfix
+sh "${CLAUDE_PLUGIN_ROOT}/scripts/run.sh" set-state phase characterize
+```
+
+In `characterize` the test-writer may read the production code: describing
+what the code does is the job here. In `tdd-loop` it may not.
+
 Before touching anything, pin the **current** behaviour around the bug. These
 tests **pass now**: they do not describe what the system should do, they describe
 what it does.
@@ -45,10 +53,10 @@ the current behaviour wrong, not that the system is broken.
 
 One. Red. It asserts the **expected** behaviour, so it fails now.
 
-The `test-writer` subagent writes it, as in any other loop. Pass it: the report,
-the observed and expected behaviour, and the real signatures of the functions
-involved — there is no frozen contract here, so signatures are read from the code
-and quoted in the brief.
+The `test-writer` subagent writes it, still in `phase: characterize`. Pass it:
+the report, the observed and expected behaviour, and the real signatures of the
+functions involved — there is no frozen contract here, so signatures are read
+from the code and quoted in the brief.
 
 Watch the red. An assertion failure is the right red: the path is correct and the
 value is wrong. An import error means you are testing in the wrong place.
@@ -56,14 +64,18 @@ value is wrong. An import error means you are testing in the wrong place.
 ## 4. tdd-loop
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/scripts/set-state.sh" flow bugfix
-sh "${CLAUDE_PLUGIN_ROOT}/scripts/set-state.sh" layer adapter
-sh "${CLAUDE_PLUGIN_ROOT}/scripts/set-state.sh" budget_max 5
+sh "${CLAUDE_PLUGIN_ROOT}/scripts/run.sh" set-state phase tdd-loop
+sh "${CLAUDE_PLUGIN_ROOT}/scripts/run.sh" set-state budget_max ""
 ```
 
-Invoke `tdd-loop`. The implementer sees the reproducing test and the signatures,
-not the report. The test-write block applies identically: if it could touch the
-characterization tests, the safety net would vanish exactly when it is needed.
+With `flow: bugfix` and `budget_max` empty, the count-cycle hook uses the
+profile's `budget_bugfix` (default 5).
+
+Invoke `tdd-loop`. The implementer gets the reproducing test's **name** and
+**failure output**, plus the signatures — not the report, and not the test file:
+it can neither read nor write tests. That block matters most here: if it could
+touch the characterization tests, the safety net would vanish exactly when it is
+needed.
 
 ## 5. Adversarial review, aimed at regressions
 
@@ -92,3 +104,5 @@ reported.
   only useful thing produced today: either the fix is wrong, or that behaviour
   needed changing and nobody said so.
 - Tidy the surrounding code. A bugfix diff must be readable in thirty seconds.
+  If the surroundings deserve better, that is a `.lasagna/design-notes.md`
+  entry, not part of the fix.

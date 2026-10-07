@@ -1,0 +1,4 @@
+# Scripts run by sh/bash must keep LF, also on Windows checkouts:
+# a CR at the end of "set -u" breaks run.sh and every hook with it.
+*.sh text eol=lf
+*.py text eol=lf

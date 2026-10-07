@@ -41,7 +41,7 @@ Poi, dentro il progetto: `claude plugin install lasagna@lasagna`, seguito da
 
 | Progetto | Cosa testa | Stato |
 |---|---|---|
-| [`httpskills/`](https://github.com/TommasoTerrin/httpskills) | server MCP (fastmcp) — libreria skill centralizzata via protocollo Agent Skills | domain + adapter layer completi, 39 criteri coperti |
+| [`httpskills/`](https://github.com/TommasoTerrin/httpskills) | server MCP (fastmcp) — libreria skill centralizzata via protocollo Agent Skills | domain + adapter layer completi, 39 criteri coperti. **Realizzato con la prima versione di lasagna (v1)**: non è ancora stato rigenerato con la v2 |
 
 Ogni progetto qui dentro spedisce, quando sensato, una propria cartella di
 esempio (es. `skills/` in `httpskills/`) con contenuto dimostrativo reale —

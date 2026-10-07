@@ -1,5 +1,5 @@
 {
-  "description": "lasagna mechanical guardrails: block implementer writes to tests, layering rules on the core, capture test outcomes, count cycles against the budget, pin phase state before compaction, and report harness status at session start. Every hook exits quietly in projects that do not use lasagna, and each can be switched off individually via hooks_disabled in the stack profile.",
+  "description": "lasagna guardrails, only where a mechanical truth is needed: the implementer may neither write nor read tests, the test-writer may not read production code during tdd-loop, test outcomes are captured from real runs, cycles are counted per criterion, and phase state is pinned before compaction and shown at session start. Every hook exits quietly in projects that do not use lasagna, and each can be switched off via hooks_disabled in the stack profile. Requires Python >= 3.9 (standard library only).",
   "hooks": {
     "SessionStart": [
       {
@@ -7,8 +7,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/session-status.sh\"",
-            "timeout": 10
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/run.sh\" hook session-status",
+            "timeout": 15
           }
         ]
       }
@@ -19,7 +19,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/block-test-edits.sh\"",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/run.sh\" hook block-test-edits",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "^(Read|Grep|Glob|Bash|NotebookRead)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/run.sh\" hook block-reads",
             "timeout": 10
           }
         ]
@@ -31,17 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/capture-test-result.sh\"",
-            "timeout": 15
-          }
-        ]
-      },
-      {
-        "matcher": "^(Edit|Write|MultiEdit)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/check-onion.sh\"",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/run.sh\" hook capture-test-result",
             "timeout": 15
           }
         ]
@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/count-cycle.sh\"",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/run.sh\" hook count-cycle",
             "timeout": 10
           }
         ]
@@ -65,7 +65,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/dump-phase-state.sh\"",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/run.sh\" hook dump-phase-state",
             "timeout": 15
           }
         ]

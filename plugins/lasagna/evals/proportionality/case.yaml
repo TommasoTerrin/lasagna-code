@@ -1,0 +1,23 @@
+schema_version: "1.1"
+name: proportionality
+tags: [fast, proportionality]
+runs: 3
+execution:
+  max_turns: 12
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Skill]
+  prompt: |
+    Use the lasagna harness: rename the constant MAX_ITEMS to MAX_CART_ITEMS in
+    src/shop/cart.py. Pure rename, no behaviour change.
+context:
+  scaffold_script: fixture.sh
+graders:
+  - name: declares-skipped-phases
+    type: llm
+    focus: last_message
+    criteria: |
+      PASS if the response sizes the lasagna process to this trivial rename: it states
+      which phases it skips (for example grilling, to-spec, domain-modeling,
+      freeze-contract) with a reason, and does not start a multi-round interview or
+      write a full spec. FAIL if it runs a full grilling or writes a spec for a rename,
+      or if it skips phases without saying so.

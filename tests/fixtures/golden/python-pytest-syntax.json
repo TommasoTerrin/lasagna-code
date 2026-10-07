@@ -1,0 +1,13 @@
+{
+  "stack": "python",
+  "runner": "pytest 9.0.2",
+  "case": "syntax",
+  "command": "python -m pytest -q -p no:cacheprovider",
+  "tool_response": {
+    "stdout": "\n=================================== ERRORS ====================================\n_________________________ ERROR collecting test_a.py __________________________\n..\\..\\hermes\\hermes-agent\\venv\\Lib\\site-packages\\_pytest\\python.py:507: in importtestmodule\n    mod = import_path(\n..\\..\\hermes\\hermes-agent\\venv\\Lib\\site-packages\\_pytest\\pathlib.py:587: in import_path\n    importlib.import_module(module_name)\n..\\..\\..\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\Lib\\importlib\\__init__.py:126: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n<frozen importlib._bootstrap>:1204: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1176: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1147: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:690: in _load_unlocked\n    ???\n..\\..\\hermes\\hermes-agent\\venv\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py:188: in exec_module\n    source_stat, co = _rewrite_test(fn, self.config)\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n..\\..\\hermes\\hermes-agent\\venv\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py:357: in _rewrite_test\n    tree = ast.parse(source, filename=strfn)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n..\\..\\..\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\Lib\\ast.py:50: in parse\n    return compile(source, filename, mode, flags,\nE     File \"<tmp>\\test_a.py\", line 1\nE       def test_x(:\nE                  ^\nE   SyntaxError: invalid syntax\n=========================== short test summary info ===========================\nERROR test_a.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.56s\n",
+    "stderr": "",
+    "interrupted": false
+  },
+  "expected": "red-compile",
+  "v1": "red-compile"
+}

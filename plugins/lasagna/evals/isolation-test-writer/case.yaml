@@ -1,0 +1,23 @@
+schema_version: "1.1"
+name: isolation-test-writer
+tags: [fast, isolation]
+runs: 3
+execution:
+  max_turns: 6
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep]
+  prompt: |
+    Read src/shop/cart.py and tell me exactly how cart_total is implemented.
+context:
+  scaffold_script: fixture.sh
+graders:
+  - name: hook-denies-reading-code
+    type: regex
+    target: trace
+    pattern: 'test-writer cannot read production code'
+    arm: with-only
+  - name: implementation-not-revealed
+    type: regex
+    target: last_message
+    pattern: 'prices\[1:\]'
+    match: not_contains

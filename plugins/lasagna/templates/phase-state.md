@@ -10,7 +10,9 @@ reorder them, do not indent them.
 feature_id: FEAT-NNN
 flow: official
 phase: grilling
-layer: domain
+layer: core
+current_slice: none
+contexts: none
 budget_max: 3
 cycles_used: 0
 active_role: none
@@ -39,14 +41,14 @@ the session dies mid-operation, this is where you restart. Free text, imperative
 addressed to an agent that has seen none of this session.
 
 Shape (the example is indented on purpose: real checkpoint lines start at column
-zero with `- [`, which is how dump-phase-state.sh finds them again).
+zero with `- [`, which is how the pre-compaction hook finds them again).
 
     - [YYYY-MM-DDTHH:MM] About to <operation>. If on restart <condition>, then
       <what to do>. Otherwise <what to do>.
 
 ## Cycle log
 
-Append-only. Written by count-cycle.sh on every SubagentStop.
+Append-only. Written by the count-cycle hook on every SubagentStop.
 
 | when | role | outcome |
 |---|---|---|
@@ -56,16 +58,32 @@ Append-only. Written by count-cycle.sh on every SubagentStop.
 ## Allowed values
 
 **phase**: `grilling`, `spec`, `gate-spec`, `domain-modeling`, `freeze-contract`,
-`gate-contract`, `tdd-loop`, `adversarial-review`, `ports-adapters`, `gate-pr`,
-`done`.
+`gate-contract`, `characterize`, `tdd-loop`, `adversarial-review`, `gate-pr`,
+`done`. In `characterize` (bugfix, brownfield) the test-writer may read the code;
+in `tdd-loop` it may not.
 
 **flow**: `official`, `prototype`, `bugfix`, `brownfield`.
 
-**layer**: `domain` (budget 3) or `adapter` (budget 5). Sets `budget_max`.
+**layer**: the kind of test in flight — `core` (budget 3: pure logic, tested by
+passing values) or `shell` (budget 5: I/O, wiring, integration with real
+infrastructure). Leave `budget_max` empty and the count-cycle hook derives it from
+`layer`, or from `flow: bugfix` (budget 5); profile keys `budget_core`,
+`budget_shell`, `budget_bugfix`.
+
+**cycles_used**: implementer attempts on the criterion in flight. **Owned by the
+count-cycle hook**: it resets to 0 when a criterion closes green, and sets
+`escalation` when it reaches `budget_max` without green. Do not edit it by hand,
+except when unfreezing the contract.
+
+**current_slice**: the slice in flight, e.g. `S2: AC-FEAT-042-003, AC-FEAT-042-004`.
+
+**contexts**: the bounded contexts loaded for this feature, copied from the
+spec's `contexts:`. Later phases read only these files from `docs/context/`.
 
 **active_role**: `none`, `test-writer`, `implementer`, `referee`,
-`adversarial-reviewer`. Hooks read this field: if it is wrong, the test-write
-block is protecting nothing.
+`adversarial-reviewer`. Hooks read this field when a tool call does not say which
+agent made it: if it is wrong, the isolation blocks protect nothing. Set it with
+`sh "${CLAUDE_PLUGIN_ROOT}/scripts/run.sh" set-state active_role <role>`.
 
 **last_test_result**: `none`, `green`, `red-compile`, `red-assertion`,
 `red-generic`, `unknown`.
