@@ -16,11 +16,11 @@ artifact.
 
 lasagna already has a memory that survives compaction:
 `.lasagna/state/FEAT-NNN.state.md`. Update it **before** writing the handoff —
-phase, cycles used, criteria covered by id, escalation, and above all the next
-checkpoint.
+phase, current slice, cycles used, criteria covered by id, escalation, and above
+all the next checkpoint.
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/scripts/set-state.sh" --append "- [$(date -u +%FT%RZ)] <what I was about to do and how to resume>"
+sh "${CLAUDE_PLUGIN_ROOT}/scripts/run.sh" set-state --append "- [$(date -u +%FT%RZ)] <what I was about to do and how to resume>"
 ```
 
 If the phase state is current, the handoff can be short. If it is not, no amount
@@ -29,8 +29,9 @@ the file on disk is still there.
 
 ## Do not duplicate
 
-Do not copy what is written elsewhere. Spec, frozen contract, ADRs,
-`CONTEXT.md`, phase state, issues, diffs and commits get cited by path or URL.
+Do not copy what is written elsewhere. Spec, frozen contract, ADRs, the project
+context (`docs/context/`), `.lasagna/architecture.md`, design notes, phase state,
+issues, diffs and commits get cited by path or URL.
 
 A handoff that repeats the spec is a handoff that will drift from the spec, and
 the reader will not know which one is true.

@@ -28,8 +28,9 @@ repairs is no longer a referee.
 **TEST IS WRONG** — the test asserts something the contract does not promise.
 Typical cases: asserting on something listed under "What is NOT frozen"
 (internal structure, operation order, private names); using a return convention
-other than the single declared one; recomputing the expected value the way the
-code computes it, so it can only ever agree with itself.
+other than the single declared one; controlling a dependency differently from
+the contract's External dependencies table; recomputing the expected value the
+way the code computes it, so it can only ever agree with itself.
 
 **CODE IS WRONG** — the test asserts exactly what the contract promises and the
 criterion requires, and the implementation departs from it. This is the default

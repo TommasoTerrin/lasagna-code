@@ -1,0 +1,13 @@
+{
+  "stack": "python",
+  "runner": "pytest 9.0.2",
+  "case": "compile",
+  "command": "python -m pytest -q -p no:cacheprovider",
+  "tool_response": {
+    "stdout": "\n=================================== ERRORS ====================================\n_________________________ ERROR collecting test_a.py __________________________\nImportError while importing test module '<tmp>\\test_a.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n..\\..\\..\\Roaming\\uv\\python\\cpython-3.11-windows-x86_64-none\\Lib\\importlib\\__init__.py:126: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntest_a.py:1: in <module>\n    from shop.cart import Cart\nE   ModuleNotFoundError: No module named 'shop'\n=========================== short test summary info ===========================\nERROR test_a.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.41s\n",
+    "stderr": "",
+    "interrupted": false
+  },
+  "expected": "red-compile",
+  "v1": "red-compile"
+}

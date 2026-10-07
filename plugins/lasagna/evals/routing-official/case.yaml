@@ -1,0 +1,19 @@
+schema_version: "1.1"
+name: routing-official
+tags: [fast, routing]
+runs: 3
+execution:
+  max_turns: 12
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Skill]
+  prompt: |
+    Use the lasagna harness to build this feature. Customers can apply a discount code
+    to a cart: codes are percentage-based and expire on a date. It is decided, build it.
+context:
+  scaffold_script: fixture.sh
+graders:
+  - name: routes-to-grilling
+    type: tool_used
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?grilling"'
+    min: 1

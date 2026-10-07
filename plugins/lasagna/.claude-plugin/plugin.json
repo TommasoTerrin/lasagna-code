@@ -1,7 +1,7 @@
 {
   "name": "lasagna",
   "version": "0.1.0",
-  "description": "Layered spec-driven harness for Claude Code. Precise spec, domain model, frozen contract, then a red-green loop where the agent writing the test and the agent writing the code never share context. Three human gates, a fixed cycle budget, and mechanical traceability from acceptance criteria to tests.",
+  "description": "Spec-driven TDD harness for Claude Code. Precise spec, frozen contract, then a red-green loop built in vertical slices, where the agent writing the test and the agent writing the code never share context: the implementer can neither read nor write tests. Rigid on process, flexible on architecture: functional core / imperative shell in proportion to the project, and existing conventions adopted, not converted. Three human gates, a per-criterion cycle budget, traceability from acceptance criteria to tests. Hooks need Python >= 3.9.",
   "author": {
     "name": "tommaso terrin"
   },
@@ -11,8 +11,8 @@
   "keywords": [
     "spec-driven-development",
     "tdd",
-    "domain-driven-design",
-    "hexagonal-architecture",
+    "functional-core-imperative-shell",
+    "vertical-slices",
     "guardrails",
     "loop-engineering"
   ]

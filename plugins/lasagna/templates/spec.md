@@ -2,12 +2,13 @@
 
 File: `.lasagna/specs/<FEAT-NNN>.md`. Committed. **Ephemeral**: it moves to
 `.lasagna/specs/archive/` when the feature merges. What survives is the ADRs,
-`CONTEXT.md` and the tests.
+the project context (`docs/context/`) and the tests.
 
 feature_id: FEAT-NNN
 flow: official | prototype | bugfix | brownfield
 status: draft | approved | in-progress | archived
 approved_by: <human name> on <YYYY-MM-DD>
+contexts: <bounded contexts this feature touches, from docs/context/INDEX.md — comma-separated>
 
 ## Goal
 
@@ -51,7 +52,7 @@ Jacobson format. One per meaningful interaction.
 
 Every criterion has a unique id `AC-<FEAT-NNN>-NNN` and is Given/When/Then. No
 criterion without a test, no test without a criterion:
-`check-traceability.sh` verifies both directions.
+`run.sh check-traceability` verifies both directions.
 
 | ID | Given | When | Then |
 |---|---|---|---|
@@ -79,13 +80,29 @@ Conditional: they hold when some condition occurs.
 |---|---|---|---|
 | ERR-001 | ... | ... | yes / no |
 
+## Slices
+
+The build order. Each slice is **vertical**: a thin path through everything a
+user would touch — core logic, the shell around it, and the integration with
+the outside world when the criteria need it — not a layer. A slice is done when
+its criteria are green end to end.
+
+**S1 is the tracer bullet**: the thinnest path that crosses every layer the
+feature will use, from the edge of the system to storage and back. It proves the
+wiring before anything is built on it; its logic can be almost trivial.
+
+| Slice | Criteria | Touches the outside world? | Done when |
+|---|---|---|---|
+| S1 (tracer) | AC-FEAT-NNN-001 | yes: <which> | ... |
+| S2 | AC-FEAT-NNN-002, AC-FEAT-NNN-003 | no | ... |
+
 ## Verification and rollback plan
 
-Per vertical slice, in build order.
+Per slice, in build order.
 
-| # | Slice | How we verify it is right | How we get back |
-|---|---|---|---|
-| 1 | ... | ... | ... |
+| Slice | How we verify it is right | How we get back |
+|---|---|---|
+| S1 | ... | ... |
 
 ## Open questions
 
@@ -98,6 +115,8 @@ abandoned.
 
 ## Domain model
 
-Appended by `domain-modeling` after the spec gate. Entities and value objects,
-aggregates with boundary and root, invariants per aggregate, cross-aggregate
-references by id.
+Appended by `domain-modeling` after the spec gate. Always: the business rules
+and invariants, the glossary terms, and the **module each rule lives in**.
+Entities and value objects only where they earn their place. Aggregates only
+where two things must change together atomically — with their boundary and
+root, and cross-aggregate references by id.

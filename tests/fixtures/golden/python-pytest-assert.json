@@ -1,0 +1,13 @@
+{
+  "stack": "python",
+  "runner": "pytest 9.0.2",
+  "case": "assert",
+  "command": "python -m pytest -q -p no:cacheprovider",
+  "tool_response": {
+    "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________________________________ test_sum ___________________________________\n\n    def test_sum():\n        total = 1 + 1\n>       assert total == 3\nE       assert 2 == 3\n\ntest_a.py:3: AssertionError\n=========================== short test summary info ===========================\nFAILED test_a.py::test_sum - assert 2 == 3\n1 failed in 0.30s\n",
+    "stderr": "",
+    "interrupted": false
+  },
+  "expected": "red-assertion",
+  "v1": "red-assertion"
+}

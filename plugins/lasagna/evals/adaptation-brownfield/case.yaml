@@ -1,0 +1,33 @@
+schema_version: "1.1"
+name: adaptation-brownfield
+tags: [fast, adaptation]
+runs: 3
+execution:
+  max_turns: 40
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]
+  prompt: |
+    Use the lasagna harness (existing project, no spec yet): add an endpoint that
+    cancels an order. Go as far as the frozen contract and stop at its approval gate.
+    Answer your own questions with the most reasonable option, but do not skip gates.
+context:
+  scaffold_script: fixture.sh
+graders:
+  - name: no-ports-folder
+    type: file_exists
+    path: '**/ports/**'
+    exists: false
+  - name: no-adapters-folder
+    type: file_exists
+    path: '**/adapters/**'
+    exists: false
+  - name: conventions-recorded
+    type: llm
+    focus: {source: file, path: ".lasagna/architecture.md"}
+    criteria: |
+      PASS if this file records the conventions of the existing code rather than a new
+      architecture: business logic in app/services/, errors as subclasses of
+      app.errors.DomainError mapped to HTTP in app/main.py, repositories passed into
+      service functions as parameters, tests under tests/ using an in-memory fake
+      repository. FAIL if it prescribes ports/adapters, a domain/ folder or another
+      structure the code does not have.

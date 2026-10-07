@@ -1,0 +1,13 @@
+{
+  "stack": "python",
+  "runner": "pytest 9.0.2",
+  "case": "assert-message",
+  "command": "python -m pytest -q -p no:cacheprovider",
+  "tool_response": {
+    "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________________________________ test_sum ___________________________________\n\n    def test_sum():\n>       assert sorted([2, 1]) == [1, 3], 'order'\nE       AssertionError: order\nE       assert [1, 2] == [1, 3]\nE         \nE         At index 1 diff: 2 != 3\nE         Use -v to get more diff\n\ntest_a.py:2: AssertionError\n=========================== short test summary info ===========================\nFAILED test_a.py::test_sum - AssertionError: order\n1 failed in 0.30s\n",
+    "stderr": "",
+    "interrupted": false
+  },
+  "expected": "red-assertion",
+  "v1": "red-assertion"
+}

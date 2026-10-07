@@ -1,6 +1,6 @@
 ---
 name: grilling
-description: Socratic interview in rounds that settles the stack profile, the scope and the architectural constraints before any spec is written. Use at the start of a lasagna feature, when a request arrives with no spec, or when an idea needs stress-testing before it gets built.
+description: Socratic interview in rounds that settles the stack profile, the architecture's separation level, the scope and the architectural constraints before any spec is written. Use at the start of a lasagna feature, when a request arrives with no spec, or when an idea needs stress-testing before it gets built.
 ---
 
 # grilling
@@ -44,9 +44,10 @@ can first (`pyproject.toml`, `package.json`, `pom.xml`, `*.csproj`, existing CI)
 and offer the detected values as your recommendation.
 
 Fields to close: language and runtime, test runner and test command, package
-manager, domain core paths, imports allowed inside the core, patterns that make
-the core impure, mutation testing command (or an explicit "none"), type checker
-and linter commands.
+manager, where tests live and how a test file is recognised, **where production
+code lives** (`source_path`: the test-writer may not read it during the loop),
+mutation testing command (or an explicit "none"), type checker and linter
+commands.
 
 Write the result to `.lasagna/stack.md` from
 `${CLAUDE_PLUGIN_ROOT}/templates/stack/base.md` plus the variant for the
@@ -56,6 +57,39 @@ Load only the variant you need.
 **Do not continue without this file**: the hooks read it, and without it they
 degrade to silent no-ops. For Python, unless told otherwise, propose `uv` and
 `uv run pytest`.
+
+## Round 0b — How much to separate (greenfield, once per project)
+
+If `.lasagna/architecture.md` is missing or still the empty template, and the
+project is **new**, ask how far to separate logic from I/O. lasagna's preferred
+principle is *functional core, imperative shell*: logic that receives values and
+returns values, I/O at the edges. How much of it to apply depends on the
+project, so the question is a level, not a yes/no:
+
+| Level | When | Shape |
+|---|---|---|
+| **minimal** | little business logic: scripts, simple CRUD | one pure logic module + the edges |
+| **modular** (usual default) | non-trivial logic, some external dependencies | modules per feature, a pure core per module, a `Protocol`/interface only on the dependencies that earn one |
+| **full-hexagonal** | complex domain, several real adapters for the same port, strong consistency constraints | explicit ports and adapters, aggregates |
+
+Recommend one **with a reason drawn from what you know of this project** — the
+amount of business logic, the external systems, how likely a technology change
+is. Ask in the same round which libraries are acceptable inside the logic
+besides the standard library (e.g. `pydantic`).
+
+Write the answers into `.lasagna/architecture.md` from
+`${CLAUDE_PLUGIN_ROOT}/templates/architecture.md`, with `origin: greenfield` and
+the user's name in `confirmed_by`.
+
+**On an existing codebase do not ask this.** The level and the conventions are
+detected from the code by `reverse-spec-brownfield`, not chosen.
+
+## Round 0c — Which contexts does this touch
+
+Read `docs/context/INDEX.md` (the profile's `context_dir`). Ask which bounded
+contexts the feature touches, recommending from the request. Only those files
+are loaded from here on; the answer goes into the spec's `contexts:`. A context
+that does not exist yet is fine — `domain-modeling` creates it.
 
 ## Round 1+ — The four questions nobody asks unprompted
 
@@ -77,6 +111,10 @@ the operation safely retryable?
 **Volumes**: how many records today, how many in a year? What is the worst case
 for the heaviest query? At what point does the proposed design stop working?
 
+Contention and partial failure are also where real aggregates come from: two
+things that must change together atomically. Note them — `domain-modeling`
+needs them.
+
 ## Example
 
 Weak — hides a decision nobody has made:
@@ -96,9 +134,9 @@ is named:
 
 ## Prototype mode
 
-Skip the four architectural axes. Close only: Round 0, what the prototype must
-demonstrate, which real infrastructure it must cross, and which question counts
-as answered at the end. Two rounds maximum, then build.
+Skip the four architectural axes and the separation level. Close only: Round 0,
+what the prototype must demonstrate, which real infrastructure it must cross,
+and which question counts as answered at the end. Two rounds maximum, then build.
 
 ## Next
 

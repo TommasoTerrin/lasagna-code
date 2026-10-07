@@ -1,0 +1,13 @@
+{
+  "stack": "python",
+  "runner": "pytest 9.0.2",
+  "case": "raises",
+  "command": "python -m pytest -q -p no:cacheprovider",
+  "tool_response": {
+    "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_________________________________ test_raises _________________________________\n\n    def test_raises():\n>       with pytest.raises(ValueError):\nE       Failed: DID NOT RAISE <class 'ValueError'>\n\ntest_a.py:5: Failed\n=========================== short test summary info ===========================\nFAILED test_a.py::test_raises - Failed: DID NOT RAISE <class 'ValueError'>\n1 failed in 0.33s\n",
+    "stderr": "",
+    "interrupted": false
+  },
+  "expected": "red-assertion",
+  "v1": "red-assertion"
+}

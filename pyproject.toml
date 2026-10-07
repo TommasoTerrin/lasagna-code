@@ -1,0 +1,13 @@
+# Tooling config only: lasagna is a Claude Code plugin, not an installable
+# Python package. The hooks use the standard library alone (docs/v2-spec.md D6).
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["plugins/lasagna/scripts"]
+# examples/httpskills is a submodule with its own suite.
+norecursedirs = ["examples", ".lasagna", ".git"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+src = ["plugins/lasagna/scripts", "tests"]

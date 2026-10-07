@@ -1,0 +1,13 @@
+{
+  "stack": "python",
+  "runner": "pytest 9.0.2",
+  "case": "generic",
+  "command": "python -m pytest -q -p no:cacheprovider",
+  "tool_response": {
+    "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________________________________ test_div ___________________________________\n\n    def test_div():\n>       return 1 / 0\n               ^^^^^\nE       ZeroDivisionError: division by zero\n\ntest_a.py:2: ZeroDivisionError\n=========================== short test summary info ===========================\nFAILED test_a.py::test_div - ZeroDivisionError: division by zero\n1 failed in 0.30s\n",
+    "stderr": "",
+    "interrupted": false
+  },
+  "expected": "red-generic",
+  "v1": "red-generic"
+}

@@ -68,7 +68,10 @@ else?* If not, that phase is ceremony for this change.
 | `freeze-contract` | no new public signature is created | two agents will have to agree on a shape they cannot discuss |
 | `tdd-loop` | **never** | always |
 | `adversarial-review` | never, in the official flow | always |
-| `ports-adapters` | no new port and no new adapter | any new contact with the outside world |
+| `pr-gate` | **never** (bugfix with `bugfix_automerge: true` excepted) | always |
+
+Inside `tdd-loop` the size of each slice follows the same logic: a slice that
+does not touch the outside world has no shell and no integration test.
 
 Two rules make this safe rather than a licence:
 
@@ -92,15 +95,26 @@ owed. If you do both, isolation disappears and with it the point of the harness.
 **Update the phase state before risky operations, not after.**
 
 ```bash
-sh "${CLAUDE_PLUGIN_ROOT}/scripts/set-state.sh" <key> <value>
-sh "${CLAUDE_PLUGIN_ROOT}/scripts/set-state.sh" --append "- [$(date -u +%FT%RZ)] <checkpoint>"
+sh "${CLAUDE_PLUGIN_ROOT}/scripts/run.sh" set-state <key> <value>
+sh "${CLAUDE_PLUGIN_ROOT}/scripts/run.sh" set-state --append "- [<UTC time>] <checkpoint>"
 ```
 
-**Respect the budget.** 3 cycles on the domain, 5 on ports, adapters and
-bugfixes. A hook counts. When it is spent, escalate.
+**Respect the budget.** Per criterion: 3 cycles on core tests, 5 on shell and
+integration tests and in bugfixes. A hook counts, and resets the count when a
+criterion closes. When it is spent, escalate.
+
+**Follow the project's architecture, propose the rest.** `.lasagna/architecture.md`
+says how the code is organised; on an existing codebase it records the
+conventions found there, and new code follows them. Improvements you notice go
+to `.lasagna/design-notes.md` as proposals — never into the code without a
+human saying yes.
+
+**Load only the context you need.** `docs/context/INDEX.md`, then the contexts
+listed in the spec's `contexts:`. Not the whole folder.
 
 ## 6. When to stop and ask
 
 Escalation set; budget spent; referee returned CRITERION IS AMBIGUOUS; the
-contract needs unfreezing; you are at a gate. In all of these, present the
+contract needs unfreezing; existing code too tangled to build on without
+restructuring it; you are at a gate. In all of these, present the
 decision to be made — not a summary of what happened.

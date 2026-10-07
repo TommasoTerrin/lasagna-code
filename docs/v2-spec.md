@@ -251,12 +251,16 @@ Ogni decisione: **cosa**, **perché**, **alternative scartate**.
 - **Cosa**: una suite di eval nel plugin, eseguita prima di ogni release e
   confrontata con la versione precedente (§6.9).
 
-### D14 — Dogfooding con la versione stabile
-- **Cosa**: la v2 si sviluppa usando la **v1 installata** (stabile), non la copia
-  in modifica. Gli hook Python si sviluppano con il flusso official di lasagna
-  (sono codice deterministico con criteri chiari); le skill si sviluppano "per
-  eval" (AC → caso di eval rosso sulla versione attuale → modifica → verde).
-  Le decisioni D1–D14 possono essere registrate come ADR in `docs/adr/` del repo
+### D14 — Niente lasagna su lasagna (rivista il 2026-10-07)
+- **Cosa**: la v2 si implementa **direttamente** da questo documento, senza
+  applicare il flusso di lasagna al repo del plugin (niente `.lasagna/`, gate o
+  agenti test-writer/implementer qui). Gli hook Python hanno normali test pytest;
+  le skill si verificano con la suite di eval (§6.9).
+- **Perché**: lasagna è un plugin (skill in markdown + pochi script), non
+  un'applicazione: il suo processo applicato a sé stesso è cerimonia.
+- **Scartato**: sviluppare con la v1 installata e il flusso official (versione
+  originale di D14), provata fino al gate 2 e abbandonata.
+- Le decisioni D1–D14 possono essere registrate come ADR in `docs/adr/` del repo
   (facoltativo, da chiedere).
 
 ---
@@ -369,7 +373,8 @@ scripts/
     shell/                # I/O: stdin JSON, file, stderr, exit code
       hooks.py            # un handler per hook
       cli.py              # set-state, check-traceability, init, status
-tests/                    # pytest (sotto plugins/lasagna/ o alla radice del repo)
+tests/                    # pytest, alla RADICE del repo: test del progetto, non
+                          # parte del plugin installato (deciso 2026-10-06)
 ```
 
 Gli hook diventano la dimostrazione del metodo: `decide(payload, profile, state)
@@ -381,10 +386,19 @@ stderr/exit code.
 Comportamento:
 1. Se non esiste `${LASAGNA_DIR:-$CLAUDE_PROJECT_DIR/.lasagna}/stack.md` → `exit 0`
    silenzioso (progetto che non usa lasagna; stesso comportamento di v1).
-2. Cerca un interprete *funzionante* in quest'ordine: `python3`, `python`,
-   `py -3`. "Funzionante" = `<cmd> -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)"`
-   riesce (scarta lo stub del Microsoft Store e versioni vecchie).
-3. Trovato → `exec <python> "$(dirname "$0")/lasagna.py" "$@"`.
+2. Usa l'interprete **salvato** in `${CLAUDE_PLUGIN_DATA}/python-path` (cartella
+   dati persistente del plugin: per macchina, sopravvive agli aggiornamenti;
+   ripiego `<plugin root>/.python-path` se la variabile manca). Python si cerca
+   quindi **una volta sola**, al primo uso, non a ogni chiamata (deciso
+   2026-10-06: `block-reads` gira su ogni Read/Grep/Glob/Bash).
+3. Se il file manca o punta a un file che non esiste più, cerca un interprete
+   *funzionante* in quest'ordine: `python3`, `python`, `py -3`. "Funzionante" =
+   `<cmd> -c "<verifica ≥ 3.9 e stampa sys.executable>"` riesce (scarta lo stub
+   del Microsoft Store e versioni vecchie); il percorso assoluto si salva.
+   Poi `exec <python> <scripts>/lasagna.py "$@"`.
+   `run.sh python` mostra il percorso in uso, `run.sh python --reset` lo
+   ricerca da capo, `run.sh python <percorso>` lo imposta; `session-status`
+   riporta a inizio sessione quale Python è in uso.
 4. Non trovato → per i guardrail bloccanti (`block-test-edits`,
    `block-test-reads`, `block-code-reads`) `exit 2` con messaggio "lasagna
    richiede Python ≥ 3.9: installalo o disattiva lasagna in questo progetto";
@@ -436,13 +450,20 @@ Identificazione dell'agente (come v1): campo `agent_type` del payload se present
 - **capture-test-result**: se il comando Bash corrisponde a
   `test_command_pattern`, classifica l'output (`tool_response`) nell'ordine
   `fail_compile` → `fail_assert` → `fail_generic` → `pass` → `unknown` e scrive
-  `last_test_result`, `last_test_command`, `last_test_at`. Stessa semantica di v1;
-  i test di regressione usano output reali di pytest/jest/junit/dotnet come
-  golden file.
+  `last_test_result`, `last_test_command`, `last_test_at`. Stessa semantica di v1.
+  L'hook non conosce nessun runner: decide solo dai pattern del profilo del
+  progetto. I golden file (output **reali**, mai trascritti) servono a
+  verificare i pattern delle varianti di stack distribuite, per i runner
+  disponibili sulla macchina di sviluppo/CI. Dove v1 sbagliava perché applicava
+  le regex al JSON grezzo su una riga (es. `^E +assert`), la deviazione è
+  accettata e documentata nel golden file (deciso 2026-10-06).
 - **count-cycle**: come v1 (log nel `## Cycle log`, `active_role: none`,
   incrementa `cycles_used` solo per l'implementer, escalation quando
   `cycles_used >= budget_max` e l'ultimo esito non è `green`), più D10: se
   `budget_max` manca lo ricava da `layer` (`core`/`shell`) o da `flow: bugfix`.
+  Il contatore è **solo dell'hook** (deciso 2026-10-06): quando l'implementer
+  chiude in `green` il criterio è chiuso e l'hook azzera `cycles_used`; la skill
+  non lo tocca.
 - **dump-phase-state**, **session-status**: porting 1:1 del comportamento v1;
   session-status aggiunge l'avviso su Python mancante (fatto dal launcher) e
   segnala profili v1 (presenza di chiavi `core_*`, vedi §6.2).
@@ -660,7 +681,7 @@ suite verde, tracciabilità ok, cicli consumati. Con `--max-cost-usd`.
 | AC-V2-004 | Implementer + Read/Grep/Glob su file di test → exit 2; implementer + Bash che esegue `test_command` → consentito. |
 | AC-V2-005 | Test-writer + `phase: tdd-loop` + Read su file sotto `source_path` non di test → exit 2; stessa azione con `phase: characterize` → exit 0. |
 | AC-V2-006 | Test-writer + Bash `cat <source_path>/x.py` in `tdd-loop` → exit 2; test-writer + Bash che esegue il comando di test → consentito. |
-| AC-V2-007 | `capture-test-result` dà lo stesso esito di v1 sui golden file di output (pytest, jest, junit, dotnet). |
+| AC-V2-007 | `capture-test-result` dà lo stesso esito di v1 sui golden file di output reali dei runner disponibili, salvo le deviazioni documentate (§6.1). |
 | AC-V2-008 | `cycles_used` si azzera a ogni criterio chiuso; escalation quando `cycles_used >= budget_max` e ultimo esito ≠ `green`; `budget_max` da `budget_core`/`budget_shell`/`budget_bugfix`. |
 | AC-V2-009 | Python assente in un progetto lasagna → i guardrail bloccanti escono 2 con istruzioni; gli altri escono 0 con avviso; `session-status` avvisa. |
 | AC-V2-010 | Il payload degli hook è letto con `json`; i percorsi vengono da `tool_input`. |
@@ -682,9 +703,9 @@ suite verde, tracciabilità ok, cicli consumati. Con `--max-cost-usd`.
 
 0. Riallineare `develop` con `main`, creare il branch `v2`. (Commit e push solo
    su richiesta del maintainer.)
-1. **Hook in Python** (§6.1) con test pytest — sviluppati con il flusso official
-   di lasagna v1 installata (D14). Prima i moduli `core/`, poi `shell/`, poi
-   `hooks.json` e launcher. AC-V2-001…011.
+1. **Hook in Python** (§6.1) con test pytest, implementati direttamente (D14).
+   Prima i moduli `core/`, poi `shell/`, poi `hooks.json` e launcher.
+   AC-V2-001…011.
 2. **Profilo** e template stack (§6.2), con compatibilità v1. AC-V2-012, 019.
 3. **Skill, agenti, template** (§6.4–6.7). AC-V2-013…018.
 4. **Contesto di progetto** (§6.8). AC-V2-018.
@@ -713,6 +734,24 @@ suite di eval veloce.
 - **Licenza di `testing-on-the-toilet`**: da verificare prima di riusarne testo.
 - **Sostenibilità di D5** (implementer cieco sui test): da rivalutare con i dati
   della suite di eval (cicli medi per criterio).
+
+Emersi durante l'implementazione (2026-10-07):
+
+- **AC-V2-012 vs AC-V2-019**: il grep "nessun `core_path`…" non può essere vuoto
+  se i profili v1 devono funzionare con mappatura. Interpretazione adottata:
+  le chiavi v1 compaiono solo nello strato di compatibilità
+  (`core/profile.py`, `core/budget.py`, `templates/stack/base.md`), escluso dal
+  controllo in `tests/test_repo.py`.
+- **Baseline delle eval (AC-V2-020) non ancora prodotte**: le run di
+  `claude plugin eval` sono processi `claude` figli che non ereditano il login
+  dell'app desktop; vanno lanciate da un terminale autenticato. Su Windows il
+  runner rifiuta di concedere Bash senza sandbox: i casi veloci non lo usano, il
+  caso `e2e-small-feature` va eseguito su Linux/macOS o in CI. Resta da
+  verificare che gli hook del plugin scattino dentro le run (casi `isolation-*`).
+- **Golden file**: solo pytest (unico runner presente sulla macchina di
+  sviluppo); TypeScript, JVM e .NET risultano "non verificati" finché qualcuno
+  non cattura output reali con `tools/capture_golden.py`.
+- **Python 3.9**: verificato solo in CI (localmente 3.11 e 3.13).
 
 ---
 
