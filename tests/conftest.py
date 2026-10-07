@@ -102,7 +102,7 @@ class Project:
 
     def fake(self, name: str, body: str) -> None:
         f = self.bin / name
-        f.write_text("#!/bin/sh\n" + body + "\n", encoding="utf-8", newline="\n")
+        f.write_bytes(("#!/bin/sh\n" + body + "\n").encode("utf-8"))
         f.chmod(0o755)
 
     def run(

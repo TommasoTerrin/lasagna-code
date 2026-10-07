@@ -66,9 +66,7 @@ def v1_classify(ref: str, stack: str, command: str, response: dict) -> str:
         scripts = t / "scripts"
         scripts.mkdir()
         for name in ("lib.sh", "capture-test-result.sh"):
-            (scripts / name).write_text(
-                git_show(ref, f"plugins/lasagna/scripts/{name}"), encoding="utf-8", newline="\n"
-            )
+            (scripts / name).write_bytes(git_show(ref, f"plugins/lasagna/scripts/{name}").encode("utf-8"))
         proj = t / "proj"
         (proj / ".lasagna" / "state").mkdir(parents=True)
         (proj / ".lasagna" / "stack.md").write_text(
@@ -129,9 +127,7 @@ def capture_pytest(ref: str) -> None:
         if v1 != v2:
             fixture["deviation"] = DEVIATIONS.get(("python", v1, v2), "UNEXPLAINED: review before committing")
         OUT.mkdir(parents=True, exist_ok=True)
-        (OUT / f"python-pytest-{case}.json").write_text(
-            json.dumps(fixture, indent=2) + "\n", encoding="utf-8", newline="\n"
-        )
+        (OUT / f"python-pytest-{case}.json").write_bytes((json.dumps(fixture, indent=2) + "\n").encode("utf-8"))
         print(f"python/pytest {case:15} v1={v1:14} v2={v2}")
 
 
